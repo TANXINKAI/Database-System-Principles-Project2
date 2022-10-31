@@ -1,7 +1,4 @@
-from configparser import ParsingError
-from platform import node
 import re
-from sqlite3 import connect
 import psycopg2
 import yaml
 from yaml.loader import SafeLoader
@@ -282,7 +279,7 @@ class QEP_Tree():
     
         
 #EXECUTION - TO BE MOVED TO A DIFF FILE 
-with open('credentials.yaml') as f:
+with open('Database-System-Principles-Project2\credentials.yaml') as f:
     credentials = yaml.load(f,Loader = SafeLoader)
 
 qm = Query_Manager(credentials["Database_Credentials"])
