@@ -190,7 +190,7 @@ class QEP_Node():
         2) Based on Node Type, get AQP Trees for different methods
         3) For each AQP Tree, find the Node that should be considered by comparing the query clauses
         4) Get meta data for Node. 
-        5) Return dictionary that contains cost of each AQP and teh optimal QEP.  
+        5) Return dictionary that contains the meta data of the optimal QEP and opther AEP 
         """
         qm = Query_Manager(credentials)         
         cost = {}
