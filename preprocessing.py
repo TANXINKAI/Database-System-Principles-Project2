@@ -73,6 +73,7 @@ class Query_Manager:
         """
         get_query_plan: pass in a query to execute query with EXPLAIN to output a query_plan
         """
+        self.disable_memoization()
         query_plan_prefix = "EXPLAIN(ANALYZE,VERBOSE,FORMAT JSON) "
         query_plan = self.DB_conn.execute(query_plan_prefix+ query)
         return query_plan[0][0][0]["Plan"]
@@ -101,6 +102,13 @@ class Query_Manager:
         """
         self.DB_conn.execute("SET max_parallel_workers_per_gather = 0;")
     
+    def disable_memoization(self):
+        """
+        disable_memoization: removes cache use
+        """
+        self.DB_conn.execute("SET enable_memoize = OFF;")
+    
+
     def get_query_tree(self,query_plan:str):
         """
         get_query_tree: uses the query plan to output a binary query tree using the QEP_Tree class.
@@ -125,6 +133,7 @@ class Query_Manager:
             for m in scan_methods:
                 if(m != method):
                     self.disable_method(m)
+            self.disable_memoization()
             qp = self.get_query_plan(query)
             for m in scan_methods:
                 if(m != method):
@@ -134,6 +143,7 @@ class Query_Manager:
             for m in join_methods:
                 if(m != method):
                     self.disable_method(m)
+            self.disable_memoization()
             qp = self.get_query_plan(query)
             for m in join_methods:
                 if(m != method):
@@ -164,10 +174,12 @@ class QEP_Node():
         else:
             self.left = None
             self.right = None
+        
         if("Workers" in  query_result.keys()):
             self.parallel_execution = True
         else:
             self.parallel_execution = False 
+        
         for key in query_result.keys():
             if(key.endswith("Cond")):
                 clauses = re.findall('\({1,}(.*?)\)', query_result[key])
@@ -207,7 +219,7 @@ class QEP_Node():
             for m in scan_methods:
                 if(m != method):
                     aqp_tree = qm.get_query_tree(qm.get_aqp(query, m, "Scan"))
-                    node_details = aqp_tree.get_node_with_clause(self.query_clause, self.query_result["Output"])
+                    node_details = aqp_tree.get_node_with_clause(self.query_clause, self.query_result)
                     cost[m] = node_details
             return cost
         elif("Join" in self.query_result["Node Type"]):
@@ -223,7 +235,7 @@ class QEP_Node():
                     if(not self.parallel_execution):
                         qm.disable_parallelism()
                     aqp_tree = qm.get_query_tree(qm.get_aqp(query, m, "Join"))
-                    node_details = aqp_tree.get_node_with_clause(self.query_clause, self.query_result["Output"])
+                    node_details = aqp_tree.get_node_with_clause(self.query_clause, self.query_result)
                     cost[m] = node_details
                     qm.enable_parallelism()
             return cost
@@ -237,10 +249,9 @@ class QEP_Tree():
     def __init__(self, query_result):
         self.head = QEP_Node(query_result)
     
-    def get_node_with_clause(self,clause,output):
+    def get_node_with_clause(self,clause,query_result):
         """
-        get_node_with_clause: Does a bfs over the binary query tree, checks if node is target node by checking clauses. 
-        In the case of Nested Loops, where the meta data  does not contain any query clauses, the output columns are used to check.
+        get_node_with_clause: Does a bfs over the binary query tree, checks if node is target node by checking clauses and QEP query result. 
         TODO: Deal with clauses that are the same but have differing order: ['c.c_custkey = o.o_custkey'] != ['o.o_custkey = c.c_custkey']
         TODO: Deal with scans that have a filter
         """
@@ -248,9 +259,7 @@ class QEP_Tree():
         queue.append(self.head)
         while(len(queue) > 0):
             node = queue.pop(0)
-            if(node.query_result["Node Type"] == "Nested Loop" and node.query_result["Output"] == output):
-                return node.query_result
-            elif(self.check_clauses(node.query_clause,clause)):
+            if(self.check_clauses(node,clause,query_result)):
                 return node.query_result
             else:
                 if(node.left is not None):
@@ -258,25 +267,42 @@ class QEP_Tree():
                 if(node.right is not None):
                     queue.append(node.right)
     
-    def check_clauses(self,node_a_clauses, node_b_clauses):
+    def check_clauses(self,node,clause,query_result):
         """
         check_clauses: checks if the query clauses of 2 different nodes are the same. 
-        TODO: Needs to be refined so that all checks are correct
         """
-        if(node_a_clauses == node_b_clauses):
+        if(node.query_clause == clause):
+            #print("Direct Clause Match")
             return True
+        elif(node.query_result["Node Type"] == "Nested Loop" and node.query_result["Output"] == query_result["Output"]):
+            #print("Nested Loop Match")
+            return True
+        elif("Scan" in node.query_result["Node Type"] and "Scan" in query_result["Node Type"]):
+            node_scan = None
+            target_scan = None
+            for i in range(0,len(node.query_clause)):
+                if("Scan" in node.query_clause[i]):
+                    node_scan = node.query_clause[i]
+            for i in range(0, len(clause)):
+                if("Scan" in clause[i]):
+                    target_scan = clause[i]
+            if(node_scan == target_scan):
+                #print("Scan Match")
+                return True
         else:
-            return False
-        # for i in range(0, len(node_a_clauses)):
-        #     c = str(node_a_clauses[i]).split(" ")
-        #     c.sort()
-        #     node_a_clauses[i] = c
-        # for i in range(0, len(node_b_clauses)):
-        #     c = str(node_b_clauses[i]).split(" ")
-        #     c.sort()
-        #     node_b_clauses[i] = c
-        # return node_a_clauses == node_b_clauses     
-    
+            node_clauses = []
+            for i in range(0, len(node.query_clause)):
+                c = re.split("\s+", node.query_clause[i])
+                c.sort()
+                node_clauses.append(c)
+            target_clauses = []
+            for i in range(0, len(clause)):
+                c = re.split("\s+", clause[i])
+                c.sort()
+                target_clauses.append(c)
+            #print("Reorder Match",node_clauses,target_clauses,node_clauses == target_clauses)
+            return node_clauses == target_clauses     
+        
         
 #EXECUTION - TO BE MOVED TO A DIFF FILE 
 with open('Database-System-Principles-Project2\credentials.yaml') as f:
@@ -292,7 +318,10 @@ def traverse_node_tree(head,credentials, query):
     queue.append(head)
     while(len(queue) > 0):
         node = queue.pop(0)
-        print(node.get_aqp_cost(credentials, query))
+        d = node.get_aqp_cost(credentials, query)
+        if(d is not None):
+            for key in d.keys():
+                print(key, d[key]["Startup Cost"] + d[key]["Total Cost"])
         if(node.left is not None):
             queue.append(node.left)
         if(node.right is not None):
