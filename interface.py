@@ -1,4 +1,7 @@
 from tkinter import *
+from preprocessing import *
+
+
 class MyWindow:
     def __init__(self, win):
         self.lbl1=Label(win, text='Please input query:')
@@ -6,7 +9,8 @@ class MyWindow:
         self.t1=Entry(bd=3)
         self.t3=Entry()
         self.btn1 = Button(win, text='Process query')
-        self.lbl1.place(x=100, y=50)
+        self.lbl1.place(x=100, y=50, width = 180, height = 100)
+        
         self.t1.place(x=250, y=50)
         self.b1=Button(win, text='Process', command=self.process)
         self.b1.place(x=100, y=150)
@@ -27,3 +31,5 @@ mywin=MyWindow(window)
 window.title('Query Plan Processing')
 window.geometry("400x300+10+10")
 window.mainloop()
+
+

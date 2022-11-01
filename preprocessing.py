@@ -304,8 +304,10 @@ class QEP_Tree():
             return node_clauses == target_clauses     
         
         
-#EXECUTION - TO BE MOVED TO A DIFF FILE 
-with open('Database-System-Principles-Project2\credentials.yaml') as f:
+#EXECUTION - TO BE MOVED TO A DIFF FILE
+#/Users/sidhaarth/Desktop/Database-System-Principles-Project2/credentials.yaml
+with open('/Users/sidhaarth/Desktop/Database-System-Principles-Project2/credentials.yaml') as f:
+    
     credentials = yaml.load(f,Loader = SafeLoader)
 
 qm = Query_Manager(credentials["Database_Credentials"])
