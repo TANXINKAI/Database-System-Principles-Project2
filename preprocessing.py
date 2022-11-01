@@ -305,9 +305,8 @@ class QEP_Tree():
         
         
 #EXECUTION - TO BE MOVED TO A DIFF FILE
-#/Users/sidhaarth/Desktop/Database-System-Principles-Project2/credentials.yaml
+#Database-System-Principles-Project2\credentials.yaml
 with open('/Users/sidhaarth/Desktop/Database-System-Principles-Project2/credentials.yaml') as f:
-    
     credentials = yaml.load(f,Loader = SafeLoader)
 
 qm = Query_Manager(credentials["Database_Credentials"])
@@ -321,6 +320,7 @@ def traverse_node_tree(head,credentials, query):
     while(len(queue) > 0):
         node = queue.pop(0)
         d = node.get_aqp_cost(credentials, query)
+        print(node.query_result["Node Type"],node.query_clause)
         if(d is not None):
             for key in d.keys():
                 print(key, d[key]["Startup Cost"] + d[key]["Total Cost"])
@@ -329,12 +329,31 @@ def traverse_node_tree(head,credentials, query):
         if(node.right is not None):
             queue.append(node.right)
 
+
+##################################################################################################
+
+
+#For printing level by level to be used in the UI
+def print_node_tree(head):
+    queue = []
+    queue.append(head)
+    while(queue):
+        count = len(queue)
+        while count > 0:
+            node = queue.pop(0)
+            print(node.query_result["Node Type"],node.query_clause, end = ' ')
+            if(node.left):
+                queue.append(node.left)
+            if(node.right):
+                queue.append(node.right)
+            count -= 1
+        print(' ')
+
+    
+
 traverse_node_tree(optimal_qep_tree.head,credentials["Database_Credentials"], query)
 
-
-
-
-
+#print_node_tree(optimal_qep_tree.head)
 
 
     
