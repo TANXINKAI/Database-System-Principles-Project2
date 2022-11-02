@@ -1,46 +1,52 @@
-from tkinter import *
-from tkinter import ttk
-
+import tkinter as tk
+from tkinter import TclError, ttk, Frame, SUNKEN, END, Tk, Label, Text, Button
+from turtle import back
+from interface_lv import Interface_ListView
 
 
 class MyWindow:
     def __init__(self, win):
-        query_frame = Frame(master = win, relief = SUNKEN, borderwidth = 5)
-        tree_frame = Frame(master = win, relief = SUNKEN, borderwidth = 5)
+        self.preloaded_query_frame = Frame(master = win)
+        self.query_frame = Frame(master = win)
+        self.tree_frame = Frame(master = win,background="orange", relief = SUNKEN, borderwidth = 5)
         annotation_frame = Frame(master = win, relief = SUNKEN, borderwidth = 5)
+        
+        win.rowconfigure(1, weight=2)
+        win.columnconfigure(2, weight=1)
+        win.rowconfigure(2, weight=0,uniform=1)
+        self.preloaded_query_frame.grid(column=1, row=1, sticky=tk.NSEW)
+        self.query_frame.grid(column=1,row=2,sticky=tk.NSEW)
+        self.tree_frame.grid(column=2, row=1, rowspan=2, sticky=tk.NSEW)
 
-        self.querylabel = Label(master = win, text = "Query")
-        self.querylabel.place(relx=0.25, rely=0.02)
-        
-        self.queryinputlabel=Label(master = win, text='Please input query:')
-        self.queryinputlabel.place(x=100, y=50)
-        
-        
-        self.qinputbox=Entry(bd=3)
-        self.qinputbox.place(x=250, y=50, width = 300, height = 100)
-        
-        
-        self.querylabel=Label(win, text='Query:')
-        self.querylabel.place(x=100, y=200)
+        self.query_frame.columnconfigure(0, weight=1)
+        self.query_frame.rowconfigure(0, weight=1)
+        self.lblQuery = Label(self.query_frame, text="Query")
+        self.tbQuery = Text(self.query_frame,height=10)
+        self.query_frame.columnconfigure(0, weight=1)
+        self.query_frame.rowconfigure(0, weight=1)
+        self.lblQuery.grid(column=1,row=1,sticky=tk.E)
+        self.tbQuery.grid(column=2,row=1,sticky=tk.W)
 
-        self.displayquery=Entry()
-        self.displayquery.place(x=250, y=200,width = 300, height = 100)
-        
-        self.processbutton=Button(win, text='Process Query',fg = "blue",relief = SUNKEN, command=self.process)
-        self.processbutton.place(x=250, y=150)
+        btnOffsetFrame = Frame(master=self.query_frame)
+        btnOffsetFrame.columnconfigure(0,weight=1)
+        btnOffsetFrame.rowconfigure(0,weight=1)
+        btnSubmitQuery = Button(master=btnOffsetFrame, text="Submit Query")
+        btnSubmitQuery.grid(column=2,row=1)
+        btnOffsetFrame.grid(column=2,row=2,sticky=tk.NSEW, padx=5, pady=5)
+        self.listview = Interface_ListView(self.preloaded_query_frame, self.preload_query)
+        self.listview.seed_default()
 
-        separator = ttk.Separator(win, orient='vertical')
-        separator.place(relx=0.5, rely=0, relwidth=0, relheight=1)
-
-        self.treelabel = Label(master = win, text = "Operator Tree")
-        self.treelabel.place(relx=0.25, rely=0.5)
+        self.listview_scrollbar = ttk.Scrollbar(self.preloaded_query_frame, orient=tk.VERTICAL, command=self.listview.lv.yview)
+        self.listview.lv.configure(yscroll=self.listview_scrollbar.set)
+        self.listview_scrollbar.grid(row=1, column=2, sticky='ns')
         
-
-        self.annotationlabel = Label(master = win, text = "Annotations")
-        self.annotationlabel.place(relx=0.75, rely=0.02)
-        
-        
-        
+    def preload_query(self, event):
+        for selected_item in self.listview.lv.selection():
+            item = self.listview.lv.item(selected_item)
+            if not item['text'] in self.listview.parent_map.keys():
+                self.tbQuery.delete("0.0",tk.END)
+                self.tbQuery.insert(tk.END,item['tags'])
+    
     def process(self):
         self.displayquery.delete(0, 'end')
         query=(self.qinputbox.get())
@@ -52,8 +58,8 @@ class MyWindow:
     
 
 window=Tk()
-width= window.winfo_screenwidth()
-height= window.winfo_screenheight()
+width= window.winfo_screenwidth() / 2
+height= window.winfo_screenheight() / 2
 window.geometry("%dx%d" % (width, height))
 mywin=MyWindow(window)
 window.title('Query Plan Processing')
