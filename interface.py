@@ -30,7 +30,7 @@ class MyWindow:
         btnOffsetFrame = Frame(master=self.query_frame)
         btnOffsetFrame.columnconfigure(0,weight=1)
         btnOffsetFrame.rowconfigure(0,weight=1)
-        btnSubmitQuery = Button(master=btnOffsetFrame, text="Submit Query")
+        btnSubmitQuery = Button(master=btnOffsetFrame, text="Submit Query", command=self.command_submit_query)
         btnSubmitQuery.grid(column=2,row=1)
         btnOffsetFrame.grid(column=2,row=2,sticky=tk.NSEW, padx=5, pady=5)
         self.listview = Interface_ListView(self.preloaded_query_frame, self.preload_query)
@@ -46,13 +46,12 @@ class MyWindow:
             if not item['text'] in self.listview.parent_map.keys():
                 self.tbQuery.delete("0.0",tk.END)
                 self.tbQuery.insert(tk.END,item['tags'])
-    
-    def process(self):
-        self.displayquery.delete(0, 'end')
-        query=(self.qinputbox.get())
-        result=query
-        self.displayquery.insert(END, str(result))
 
+    def command_submit_query(self):
+        query=(self.tbQuery.get("0.0", tk.END)).strip()
+        #pass query to preprocessing
+        pass
+    
     def visualiseTree(self):
         pass
     
