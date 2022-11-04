@@ -4,6 +4,8 @@ import yaml
 from yaml.loader import SafeLoader
 import sqlvalidator
 import sqlparse
+from turtle import Turtle,Screen
+from math import acos
 
 class DB_Connection:
     """
@@ -302,16 +304,6 @@ class QEP_Tree():
                 target_clauses.append(c)
             #print("Reorder Match",node_clauses,target_clauses,node_clauses == target_clauses)
             return node_clauses == target_clauses     
-        
-        
-#EXECUTION - TO BE MOVED TO A DIFF FILE
-#Database-System-Principles-Project2\credentials.yaml
-with open('/Users/sidhaarth/Desktop/Database-System-Principles-Project2/credentials.yaml') as f:
-    credentials = yaml.load(f,Loader = SafeLoader)
-
-qm = Query_Manager(credentials["Database_Credentials"])
-query = "select * FROM orders O, customer C WHERE O.o_custkey = C.c_custkey"
-optimal_qep_tree = qm.get_query_tree(qm.get_query_plan(query))
 
                
 def traverse_node_tree(head,credentials, query):
@@ -329,31 +321,65 @@ def traverse_node_tree(head,credentials, query):
         if(node.right is not None):
             queue.append(node.right)
 
+#traverse_node_tree(optimal_qep_tree.head,credentials["Database_Credentials"], query)
 
 ##################################################################################################
 
 
-#For printing level by level to be used in the UI
-def print_node_tree(head):
-    queue = []
-    queue.append(head)
-    while(queue):
-        count = len(queue)
-        while count > 0:
-            node = queue.pop(0)
-            print(node.query_result["Node Type"],node.query_clause, end = ' ')
-            if(node.left):
-                queue.append(node.left)
-            if(node.right):
-                queue.append(node.right)
-            count -= 1
-        print(' ')
 
-    
-
-traverse_node_tree(optimal_qep_tree.head,credentials["Database_Credentials"], query)
-
-#print_node_tree(optimal_qep_tree.head)
+def height(root):
+    '''
+    height: Returns the height of the binary tree
+    '''
+ 
+    # Check if the binary tree is empty
+    if root is None:
+        # If TRUE return 0
+        return 0 
+    # Recursively call height of each node
+    leftAns = height(root.left)
+    rightAns = height(root.right)
+ 
+    # Return max(leftHeight, rightHeight) at each iteration
+    return max(leftAns, rightAns) + 1
 
 
-    
+DOT_DIAMETER = 30
+GENERATION_DISTANCE = 75
+def tree(turtle, d, origin,node):
+    '''
+    tree: function to draw the binary operator tree using turtle
+    '''
+
+    turtle.penup()
+    turtle.setposition(origin)
+    if (node):
+        
+        turtle.write(node.query_result["Node Type"], move = False, font = ("Arial",12,"normal"))
+    if d == 0:  # base case
+        return
+
+    distance = (GENERATION_DISTANCE**2 + (2**d * DOT_DIAMETER / 2)**2)**0.5
+    angle = acos(GENERATION_DISTANCE / distance)
+
+    if node.right:
+        turtle.pendown()
+    turtle.left(angle)
+    turtle.forward(distance)
+    right = turtle.position()
+    turtle.right(angle)
+
+    turtle.penup()
+    turtle.setposition(origin)
+    if node.left:
+        turtle.pendown()
+    turtle.right(angle)
+    turtle.forward(distance)
+    left = turtle.position()
+    turtle.left(angle)
+
+    tree(turtle, d - 1, right,node.right)  # recurse right branch
+    tree(turtle, d - 1, left,node.left)  # recurse left branch
+
+
+

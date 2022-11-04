@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import TclError, ttk, Frame, SUNKEN, END, Tk, Label, Text, Button
-from turtle import back
 from interface_lv import Interface_ListView
 
 
@@ -56,13 +55,6 @@ class MyWindow:
         pass
     
 
-window=Tk()
-width= window.winfo_screenwidth() / 2
-height= window.winfo_screenheight() / 2
-window.geometry("%dx%d" % (width, height))
-mywin=MyWindow(window)
-window.title('Query Plan Processing')
 
-window.mainloop()
 
 
