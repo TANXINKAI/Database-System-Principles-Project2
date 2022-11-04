@@ -349,12 +349,12 @@ GENERATION_DISTANCE = 75
 def tree(turtle, d, origin,node):
     '''
     tree: function to draw the binary operator tree using turtle
+    TODO (Maybe):Using Dot diameter to draw a circle around the node
     '''
 
     turtle.penup()
     turtle.setposition(origin)
     if (node):
-        
         turtle.write(node.query_result["Node Type"], move = False, font = ("Arial",12,"normal"))
     if d == 0:  # base case
         return
@@ -378,8 +378,8 @@ def tree(turtle, d, origin,node):
     left = turtle.position()
     turtle.left(angle)
 
-    tree(turtle, d - 1, right,node.right)  # recurse right branch
-    tree(turtle, d - 1, left,node.left)  # recurse left branch
+    tree(turtle, d - 1, right,node.right) 
+    tree(turtle, d - 1, left,node.left)  
 
 
 
