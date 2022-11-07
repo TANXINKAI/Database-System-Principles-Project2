@@ -304,8 +304,7 @@ class QEP_Tree():
                 target_clauses.append(c)
             #print("Reorder Match",node_clauses,target_clauses,node_clauses == target_clauses)
             return node_clauses == target_clauses     
-
-               
+          
 def traverse_node_tree(head,credentials, query):
     queue = []
     queue.append(head)
@@ -325,23 +324,30 @@ def traverse_node_tree(head,credentials, query):
 
 ##################################################################################################
 
+def post_order_traverse_node_tree(head,credentials, query):
+    '''
+    post_order_traverse_node_tree: meant for use in annotation, going in order of operator evaluation
+    '''
+    if head == None:
+        return
+    post_order_traverse_node_tree(head.left,credentials, query)
+    post_order_traverse_node_tree(head.right,credentials, query)
+
+    d = head.get_aqp_cost(credentials, query)
+    if(head.query_clause != []):
+        print(head.query_result["Node Type"], head.query_clause)
+    if (d is not None):
+        for key in d.keys():
+            print(key, d[key]["Startup Cost"] + d[key]["Total Cost"])
 
 
 def height(root):
     '''
     height: Returns the height of the binary tree
     '''
- 
-    # Check if the binary tree is empty
-    if root is None:
-        # If TRUE return 0
+    if root == None:
         return 0 
-    # Recursively call height of each node
-    leftAns = height(root.left)
-    rightAns = height(root.right)
- 
-    # Return max(leftHeight, rightHeight) at each iteration
-    return max(leftAns, rightAns) + 1
+    return max(height(root.left), height(root.right)) + 1
 
 
 DOT_DIAMETER = 30
