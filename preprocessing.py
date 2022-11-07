@@ -324,41 +324,38 @@ def traverse_node_tree(head,credentials, query):
 
 ##################################################################################################
 
-def post_order_traverse_node_tree(head,credentials, query, list_tree):
+def post_order_traverse_node_tree(head,credentials, query):
     '''
     post_order_traverse_node_tree: meant for use in annotation, going in order of operator evaluation
-    ''' 
-
+    '''
     if head == None:
-        return 
-        # Error is here, "None" is return and is appended to my list_tree
-    list_tree.append(post_order_traverse_node_tree(head.left,credentials, query, list_tree))
-    list_tree.append(post_order_traverse_node_tree(head.right,credentials, query, list_tree))
+        return
+    post_order_traverse_node_tree(head.left,credentials, query)
+    post_order_traverse_node_tree(head.right,credentials, query)
 
     d = head.get_aqp_cost(credentials, query)
-    curr_node_dict = {}
     if(head.query_clause != []):
-        #print('start')
-        print(head.query_result["Node Type"], head.query_clause)
-        curr_node_dict["Query_clause"]= head.query_clause
-        
-    curr_node_type = []
+        dict_key = (head.query_result["Node Type"],head.query_clause[0])
+        tree_dict[dict_key] = []
     if (d is not None):
         for key in d.keys():
-            print(key, d[key]["Startup Cost"] + d[key]["Total Cost"])
-            curr_type_scan_join = [key, d[key]["Startup Cost"] + d[key]["Total Cost"]]
-            curr_node_type.append(curr_type_scan_join)
-            #print('test\n')
-            #print(curr_node_type)
+            dict_key_entry = (key, d[key]["Startup Cost"] + d[key]["Total Cost"])
+            tree_dict[dict_key].append(dict_key_entry)
 
-    if curr_node_type:
-        curr_node_dict["Type"]= curr_node_type
-    if curr_node_dict:
-        list_tree.append(curr_node_dict)
-    #print(list_tree)
+
+def post_order_wrap(head, credentials, query):
+    '''
+    wrapper function for post_order_traverse_node_tree so that the results can be stored in a dictionary through recursive calls
+    '''
+    global tree_dict
+    tree_dict = {}
+    post_order_traverse_node_tree(head,credentials,query)
+    return tree_dict
 
     list_tree = [i for i in list_tree if i != None]
     return list_tree
+
+
 
 def height(root):
     '''
