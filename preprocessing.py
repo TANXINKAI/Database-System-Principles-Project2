@@ -304,8 +304,7 @@ class QEP_Tree():
                 target_clauses.append(c)
             #print("Reorder Match",node_clauses,target_clauses,node_clauses == target_clauses)
             return node_clauses == target_clauses     
-
-               
+          
 def traverse_node_tree(head,credentials, query):
     queue = []
     queue.append(head)
@@ -325,23 +324,49 @@ def traverse_node_tree(head,credentials, query):
 
 ##################################################################################################
 
+def post_order_traverse_node_tree(head,credentials, query, list_tree):
+    '''
+    post_order_traverse_node_tree: meant for use in annotation, going in order of operator evaluation
+    ''' 
 
+    if head == None:
+        return 
+        # Error is here, "None" is return and is appended to my list_tree
+    list_tree.append(post_order_traverse_node_tree(head.left,credentials, query, list_tree))
+    list_tree.append(post_order_traverse_node_tree(head.right,credentials, query, list_tree))
+
+    d = head.get_aqp_cost(credentials, query)
+    curr_node_dict = {}
+    if(head.query_clause != []):
+        #print('start')
+        print(head.query_result["Node Type"], head.query_clause)
+        curr_node_dict["Query_clause"]= head.query_clause
+        
+    curr_node_type = []
+    if (d is not None):
+        for key in d.keys():
+            print(key, d[key]["Startup Cost"] + d[key]["Total Cost"])
+            curr_type_scan_join = [key, d[key]["Startup Cost"] + d[key]["Total Cost"]]
+            curr_node_type.append(curr_type_scan_join)
+            #print('test\n')
+            #print(curr_node_type)
+
+    if curr_node_type:
+        curr_node_dict["Type"]= curr_node_type
+    if curr_node_dict:
+        list_tree.append(curr_node_dict)
+    #print(list_tree)
+
+    list_tree = [i for i in list_tree if i != None]
+    return list_tree
 
 def height(root):
     '''
     height: Returns the height of the binary tree
     '''
- 
-    # Check if the binary tree is empty
-    if root is None:
-        # If TRUE return 0
+    if root == None:
         return 0 
-    # Recursively call height of each node
-    leftAns = height(root.left)
-    rightAns = height(root.right)
- 
-    # Return max(leftHeight, rightHeight) at each iteration
-    return max(leftAns, rightAns) + 1
+    return max(height(root.left), height(root.right)) + 1
 
 
 DOT_DIAMETER = 30
