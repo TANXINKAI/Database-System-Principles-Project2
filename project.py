@@ -10,7 +10,7 @@ Execution code from preprocessing
 TODO: clean up the printing of the tree, (does the cost need to be shown too?), embed the tree into the tkinter window
 '''
 #Database-System-Principles-Project2\credentials.yaml
-with open('/Users/sidhaarth/Desktop/Database-System-Principles-Project2/credentials.yaml') as f:
+with open('C:/Users/lauka/Desktop/CZ4031 Database System Principles/Project/Project 2/Database-System-Principles-Project2/credentials.yaml') as f:
     credentials = yaml.load(f,Loader = SafeLoader)
 
 qm = Query_Manager(credentials["Database_Credentials"])
