@@ -335,10 +335,22 @@ def post_order_traverse_node_tree(head,credentials, query):
 
     d = head.get_aqp_cost(credentials, query)
     if(head.query_clause != []):
-        print(head.query_result["Node Type"], head.query_clause)
+        dict_key = (head.query_result["Node Type"],head.query_clause[0])
+        tree_dict[dict_key] = []
     if (d is not None):
         for key in d.keys():
-            print(key, d[key]["Startup Cost"] + d[key]["Total Cost"])
+            dict_key_entry = (key, d[key]["Startup Cost"] + d[key]["Total Cost"])
+            tree_dict[dict_key].append(dict_key_entry)
+
+
+def post_order_wrap(head, credentials, query):
+    '''
+    wrapper function for post_order_traverse_node_tree so that the results can be stored in a dictionary through recursive calls
+    '''
+    global tree_dict
+    tree_dict = {}
+    post_order_traverse_node_tree(head,credentials,query)
+    return tree_dict
 
 
 def height(root):

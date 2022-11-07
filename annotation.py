@@ -1,5 +1,5 @@
 import yaml
-from preprocessing import Query_Manager, post_order_traverse_node_tree
+from preprocessing import Query_Manager, post_order_wrap
 
 '''
 what we have in preprocessing
@@ -25,18 +25,21 @@ Factors:
     Scans: selectivity level, input size
 
 Currently output from the postorder traversal tree:
+    
     Seq Scan ['Scan orders']
-    seqscan 40897.0
-    bitmapscan 20000040897.0
-    indexscan 20000040897.0
+        seqscan 40897.0
+        bitmapscan 20000040897.0
+        indexscan 20000040897.0
+    
     Seq Scan ['Scan customer']
-    seqscan 5066.0
-    bitmapscan 4.87
-    indexscan 9115.87
+        seqscan 5066.0
+        bitmapscan 4.87
+        indexscan 9115.87
+    
     Hash Join ['o.o_custkey = c.c_custkey']
-    hashjoin 118632.61
-    mergejoin 773924.8999999999
-    nestloop 714707.13
+        hashjoin 118632.61
+        mergejoin 773924.8999999999
+        nestloop 714707.13
 
 
 Functions to be made:
@@ -86,7 +89,17 @@ Functions to be made:
     
 '''
 
-
+def overall_processor(tree_dict):
+    annotation = "The least cost QEP was selected. "
+    for item in tree_dict:
+        operator_type = item[0]
+        clause = item[1]
+        annotation += "The operation done now is: "
+        annotation += str(operator_type)
+        annotation += "The clause this is being done on is: "
+        annotation += str(clause)
+    
+    return annotation
 
 
 
@@ -99,4 +112,7 @@ qm = Query_Manager(credentials["Database_Credentials"])
 query = "select * FROM orders O, customer C WHERE O.o_custkey = C.c_custkey"
 optimal_qep_tree = qm.get_query_tree(qm.get_query_plan(query))
 
-post_order_traverse_node_tree(optimal_qep_tree.head,credentials["Database_Credentials"], query)
+tree_dict = post_order_wrap(optimal_qep_tree.head,credentials["Database_Credentials"], query)
+
+print(overall_processor(tree_dict))
+
