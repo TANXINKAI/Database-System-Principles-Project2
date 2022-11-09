@@ -7,9 +7,6 @@ from os import path
 sql_dir = "Z:\\TPC-H V3.0.1\\dbgen\\queries"
 files = glob(path.join(sql_dir,"*.sql"))
 
-
-
-
 final_out = "["
 for i in files:
   output = ""

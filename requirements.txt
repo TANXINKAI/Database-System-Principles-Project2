@@ -2,3 +2,4 @@ pyyaml == 6.0
 psycopg2 == 2.9.5
 psycopg2-binary == 2.9.5
 sqlvalidator == 0.0.19
+numpy == 1.23.4

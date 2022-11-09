@@ -3,9 +3,10 @@ import psycopg2
 import yaml
 from yaml.loader import SafeLoader
 import sqlvalidator
-# import sqlparse
+#import sqlparse
 from turtle import Turtle,Screen
 from math import acos
+import numpy as np
 
 
 
@@ -154,12 +155,17 @@ class Query_Manager:
         return row_num[0][0]
     
     def get_index(self, relation):
-        indexes = self.DB_conn.execute("select C.COLUMN_NAME "\
+        indexes = []
+        indexes_tuple = self.DB_conn.execute("select C.COLUMN_NAME "\
             "FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS T "\
             "JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C "\
             "ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME "\
             "WHERE C.TABLE_NAME LIKE "+ "'{}'".format(relation) + " AND T.constraint_type LIKE 'PRIMARY KEY'")
-        return indexes[0][0]
+        
+        for i in range(0, len(indexes_tuple[0])):
+            indexes.append(indexes_tuple[0][i])
+        return indexes
+
     
 class QEP_Node():
     """
@@ -198,7 +204,7 @@ class QEP_Node():
                 clauses = re.findall('\({1,}(.*?)\)', query_result[key])
                 self.query_clause = self.query_clause + clauses
             elif(query_result["Node Type"].endswith("Scan") and "Relation Name" in key):
-                self.query_clause.append(query_result["Relation Name"]+ " Scan")
+                self.query_clause.append("Scan "+ query_result["Relation Name"])
         
         self.query_clause.sort()
 
@@ -215,12 +221,21 @@ class QEP_Node():
         5) Return dictionary that contains the meta data of AQPs. 
         """
         qm = Query_Manager(config["Database_Credentials"])         
-        cost = {}
+        qep_data = {}
+        aqp_data = {}
         node_type = self.query_result["Node Type"]
         query_plan = qm.get_qep_information(query)
         qm.set_parallelize(query_plan, config["Supported_Query_Plan_Parameters"]["Parallelize"])
         
+        qep_data["Optimal"] = self.query_result
+
         if("Join" in node_type):
+            qep_data["left_num_rows"] = self.left.query_result["Plan Rows"]
+            qep_data['right_num_rows'] = self.right.query_result["Plan Rows"]
+
+            qep_data["left_is_sorted_on"] = self.is_sorted_on(self.left)
+            qep_data["right_is_sorted_on"] = self.is_sorted_on(self.right)
+
             index = query_plan["join_methods"].index(node_type)
             for param in config["Supported_Query_Plan_Parameters"]["Joins"]:
                 if(param != node_type):
@@ -228,11 +243,9 @@ class QEP_Node():
                     qm.set_aqp_parameters(query_plan["scan_methods"], query_plan["join_methods"], config["Supported_Query_Plan_Parameters"]["Scans"], config["Supported_Query_Plan_Parameters"]["Joins"])
                     alternate_query = qm.get_query_plan(query)
                     alternate_query_tree = qm.get_query_tree(alternate_query)
-                    aqp_data = alternate_query_tree.get_node_with_clause(self.query_clause, self.query_result)
-                    if(aqp_data["Node Type"] != param):
-                        cost[param] = aqp_data["Node Type"]
-                    else:
-                        cost[param] = aqp_data
+                    aqp_txt = alternate_query_tree.get_node_with_clause(self.query_clause, self.query_result)
+                    if(aqp_txt["Node Type"] == param):
+                        aqp_data[param] = aqp_txt
         
         elif("Scan" in node_type):
             num_rows_after_predicate = self.query_result["Plan Rows"]
@@ -243,9 +256,20 @@ class QEP_Node():
             
             selectivity = num_rows_after_predicate/num_rows_before_predicate
 
-            cost["selectivity"] = selectivity
+            qep_data["selectivity"] = selectivity
 
-            #TODO: if time permits, add check to see if all columns in clauses are indexed, if they are, then it can use Index-Only 
+            columns_used = []
+            indexes = qm.get_index(self.query_result["Relation Name"])
+            for i in range(0, len(self.query_clause)):
+                s = re.split("\s+", self.query_clause[i])
+                if(s[0] != "Scan"):
+                    columns_used.append(s[0])
+            
+            for i in range(0,len(indexes)):
+                indexes[i] = str(self.query_result["Relation Name"])+"."+indexes[i]
+
+            qep_data["indexes"] = indexes
+            qep_data["columns_used"] = columns_used
 
             index = query_plan["scan_methods"].index(node_type)
             for param in config["Supported_Query_Plan_Parameters"]["Scans"]:
@@ -254,12 +278,26 @@ class QEP_Node():
                     qm.set_aqp_parameters(query_plan["scan_methods"], query_plan["join_methods"], config["Supported_Query_Plan_Parameters"]["Scans"], config["Supported_Query_Plan_Parameters"]["Joins"])
                     alternate_query = qm.get_query_plan(query)
                     alternate_query_tree = qm.get_query_tree(alternate_query)
-                    aqp_data = alternate_query_tree.get_node_with_clause(self.query_clause, self.query_result)
-                    if(aqp_data["Node Type"] != param):
-                        cost[param] = aqp_data["Node Type"]
-                    else:
-                        cost[param] = aqp_data    
-        return cost
+                    aqp_txt = alternate_query_tree.get_node_with_clause(self.query_clause, self.query_result)
+                    if(aqp_txt["Node Type"] == param):
+                        aqp_data[param] = aqp_txt   
+        qep_data["aqp_data"] = aqp_data
+        return qep_data
+
+    def is_sorted_on(self,head):
+            queue = []
+            sorted_on = []
+            queue.append(head)
+            while(len(queue) > 0):
+                node = queue.pop(0)
+                if(node.query_result["Node Type"] == "Sort"):
+                    sorted_on.append(node.query_result["Sort Key"])
+                if(node.left is not None):
+                    queue.append(node.left)
+                if(node.right is not None):
+                    queue.append(node.right)
+            return sorted_on
+
             
         
 
@@ -323,20 +361,6 @@ class QEP_Tree():
             # Reorder Match 
             return node_clauses == target_clauses     
           
-# def traverse_node_tree(head,credentials, query):
-#     queue = []
-#     queue.append(head)
-#     while(len(queue) > 0):
-#         node = queue.pop(0)
-#         d = node.get_aqp_cost(credentials, query)
-#         print(node.query_result["Node Type"],node.query_clause)
-#         if(d is not None):
-#             for key in d.keys():
-#                 print(key, d[key]["Startup Cost"] + d[key]["Total Cost"])
-#         if(node.left is not None):
-#             queue.append(node.left)
-#         if(node.right is not None):
-#             queue.append(node.right)
 
 def post_order_traverse_node_tree(head,config, query):
     '''
@@ -355,9 +379,6 @@ def post_order_traverse_node_tree(head,config, query):
     
     if (d is not None):
         tree_dict[dict_key] = d
-        # for key in d.keys():
-        #     #dict_key_entry = (key, d[key]["Startup Cost"] + d[key]["Total Cost"])
-        #     #tree_dict[dict_key].append(dict_key_entry)
         
 
 
@@ -385,7 +406,7 @@ def height(root):
 
 
 
-#Preprocessing Of Diagram - shoudl this be under another file?
+#Preprocessing Of Diagram - should this be in interface?
 #################################################################################################
 
 DOT_DIAMETER = 30
@@ -426,6 +447,14 @@ def tree(turtle,d,origin,node):
     tree(turtle, d - 1, left,node.left)  
 
 
+# with open('config.yaml') as f:
+#     config = yaml.load(f,Loader = SafeLoader)
+
+# qm = Query_Manager(config["Database_Credentials"])
+# query = "select * FROM region WHERE r_name LIKE 'A%'"
+# print(qm.get_index("orders"))
+# optimal_qep_tree = qm.get_query_tree(qm.get_query_plan(query))
+# print(post_order_wrap(optimal_qep_tree.head, config, query))
 
 
 
