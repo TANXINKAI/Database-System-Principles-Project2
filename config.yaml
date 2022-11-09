@@ -1,0 +1,25 @@
+Database_Credentials:
+  DB_NAME: "tpch"
+  DB_USER: "postgres"
+  DB_PASS: "dbms"
+  DB_HOST: "localhost"
+  DB_PORT: "5432"
+
+Supported_Query_Plan_Parameters:
+  Scans: 
+    Bitmap Scan: "enable_bitmapscan"
+    Index Scan: "enable_indexscan"
+    Index Only Scan: "enable_indexonlyscan"
+    Seq Scan: "enable_seqscan"
+    TID Scan: "enable_tidscan"  
+
+  Joins:
+    Merge Join: "enable_mergejoin"
+    Nested Loop: "enable_nestloop"
+    Hash Join: "enable_hashjoin"
+
+  Parallelize: "max_parallel_workers_per_gather"
+
+
+
+  
