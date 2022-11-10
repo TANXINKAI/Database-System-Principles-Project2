@@ -32,3 +32,10 @@ mywin=MyWindow(window, config)
 window.title('Query Plan Processing')
 
 window.mainloop()
+
+
+## Cleanup, removes any temporary image file that was generated to keep the folders clean
+if os.path.exists('./tmp'):
+    os.remove('./tmp')
+if os.path.exists('./tmp.jpg'):
+    os.remove('./tmp.jpg')
