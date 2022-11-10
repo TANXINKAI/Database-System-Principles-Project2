@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, Frame, SUNKEN, Tk
+from tkinter import ttk
 from tkinter.messagebox import showinfo
 
 class Interface_ListView:

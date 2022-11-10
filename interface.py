@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import TclError, ttk, Frame, SUNKEN, END, Tk, Label, Text, Button
+from tkinter import ttk, Frame, SUNKEN, Label, Text, Button
 from interface_lv import Interface_ListView
 import preprocessing, annotation
 import graphviz

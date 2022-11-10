@@ -1,14 +1,5 @@
 import re
 import psycopg2
-import yaml
-from yaml.loader import SafeLoader
-import sqlvalidator
-#import sqlparse
-from turtle import Turtle,Screen
-from math import acos
-import numpy as np
-
-
 
 class DB_Connection:
     """
