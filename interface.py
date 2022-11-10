@@ -45,6 +45,8 @@ class MyWindow:
         self.james = None
         self.tbAnnotation = Text(self.tree_frame,height=20, bg="lightgrey")
         self.tbAnnotation.insert(tk.END,"Annotations will be loaded here after query is submitted")
+        self.tbAnnotation.tag_add("instructions", "1.0", "2.0")
+        self.tbAnnotation.tag_config("instructions", foreground='red')
         self.tbAnnotation.grid(column=0,row=3,sticky=tk.EW)
         
     def preload_query(self, event):
@@ -57,10 +59,14 @@ class MyWindow:
 
     def command_submit_query(self):
         query=(self.tbQuery.get("0.0", tk.END)).strip()
-        query = query.replace("date ':1'","date '1/1/1970'")
+
+        # This bunch of replace is just to 'fix' the SQL parameters for TPC-H queries.
+        # Replacing them with dummy values or omitting them
+        query = query.replace("date ':1'","date '1/1/1970'") 
         query = query.replace("date ':2'","date '1/1/1970'")
         query = query.replace("date ':3'","date '1/1/1970'")
         query = query.replace("date ':4'","date '1/1/1970'")
+        query = query.replace("day (3)","")
         query = query.replace(":","")
         self.visualiseTree(query)
         #pass query to preprocessing
@@ -142,5 +148,8 @@ class MyWindow:
         self.tbAnnotation.delete("0.0",tk.END)
         text = "Click on image for full size. Scroll down for more annotations (if available).\n" + annotation.get_annotations(node_count,annotate_dict)
         self.tbAnnotation.insert(tk.END,text)
+        self.tbAnnotation.tag_add("instructions", "1.0", "2.0")
+        self.tbAnnotation.tag_config("instructions", foreground='red')
+        self.tbAnnotation.update()
 
 
