@@ -20,6 +20,3 @@ Supported_Query_Plan_Parameters:
 
   Parallelize: "max_parallel_workers_per_gather"
 
-
-
-  

@@ -10,10 +10,15 @@ def state_qp_step(count,optimal_data):
     for key in optimal_data.keys():
         if(key.endswith("Cond")):
             clauses = re.findall('\({1,}(.*?)\)', optimal_data[key])
-            filter_conditions.append(*clauses)
+            for clause in clauses:
+                if(clause not in filter_conditions):
+                    filter_conditions.append(clause)
+
         elif(key == "Filter"):
             clauses = re.findall('\({1,}(.*?)\)', optimal_data[key])
-            filter_conditions.append(*clauses)
+            for clause in clauses:
+                if(clause not in filter_conditions):
+                    filter_conditions.append(clause)
 
     if("Scan" in optimal_data["Node Type"]):
         if(len(filter_conditions) > 0):
@@ -22,9 +27,18 @@ def state_qp_step(count,optimal_data):
             output_txt += "{}) A {} is performed on {}.\n".format(count, optimal_data['Node Type'], optimal_data["Relation Name"])
     else:
         if(len(filter_conditions) > 0):
-            output_txt += "{}) A {} is performed with the filter(s) {}.\n".format(count, optimal_data['Node Type'], filter_conditions)
+            output_txt += "{}) A {} is performed over the condition(s) {}.\n".format(count, optimal_data['Node Type'], filter_conditions)
         else:
-            output_txt += "{}) A {} is performed.\n".format(count, optimal_data['Node Type'])
+            if("Hash" in optimal_data["Node Type"]):
+                hash_output = optimal_data["Output"][0]
+                hash_relation = re.findall("(\w+)", hash_output)[0]
+                output_txt += "{}) A {} is performed on {}.\n".format(count, optimal_data['Node Type'], hash_relation)
+            elif("Sort" in optimal_data["Node Type"]):
+                sort_key = optimal_data["Sort Key"]
+                output_txt += "{}) A {} is performed with key {}.\n".format(count, optimal_data['Node Type'], sort_key)
+            else:
+                output_txt += "{}) A {} is performed.\n".format(count, optimal_data['Node Type'])
+
     
     return output_txt
 
@@ -67,7 +81,6 @@ def explain_scan(count, scan_dict):
 def explain_join(count, join_dict):
     output_txt = ""
     output_txt = output_txt + state_qp_step(count, join_dict["Optimal"])
-
     output_txt += "The left table is estimated to have {} rows".format(join_dict["left_num_rows"])
     if(len(join_dict["left_is_sorted_on"]) == 0):
         output_txt += " and is not sorted.\n"
@@ -119,9 +132,10 @@ def get_annotations(data):
     count = 1
     output_txt = ""
     for key in data.keys():
+        # print(data[key]["Optimal"]["Node Type"])
         if("Scan" in data[key]["Optimal"]["Node Type"]):
             output_txt += explain_scan(count, data[key])
-        elif("Join" in data[key]["Optimal"]["Node Type"]):
+        elif("Join" in data[key]["Optimal"]["Node Type"] or "Nested Loop" in data[key]["Optimal"]["Node Type"]):
             output_txt += explain_join(count, data[key])
         else:
             output_txt += state_qp_step(count, data[key]["Optimal"])
@@ -129,13 +143,20 @@ def get_annotations(data):
         output_txt += "\n"
     return output_txt
 
-# with open('config.yaml') as f:
-#     config = yaml.load(f,Loader = SafeLoader)
+with open('config.yaml') as f:
+    config = yaml.load(f,Loader = SafeLoader)
 
 # qm = preprocessing.Query_Manager(config["Database_Credentials"])
 # q1 = "select * FROM region WHERE r_name LIKE 'A%'"
 # q2 = "select * FROM orders O, customer C WHERE O.o_custkey = C.c_custkey"
-# optimal_qep_tree = qm.get_query_tree(qm.get_query_plan(q2))
-# data = preprocessing.post_order_wrap(optimal_qep_tree.head, config, q2)
+# q3 = "select l_orderkey, sum( l_extendedprice *( 1-l_discount )) as revenue, o_orderdate, o_shippriority from customer,orders,lineitem where c_mktsegment = 'HOUSEHOLD' and c_custkey = o_custkey  and l_orderkey = o_orderkey and o_orderdate < date '1995-03-21' and l_shipdate > date '1955-03-21' group by l_orderkey, o_orderdate, o_shippriority order by revenue DESC, o_orderdate limit 10";
+# q4 = "select o_orderpriority,count(*) as order_count from orders where o_orderdate >= date '1996-03-01' and o_orderdate < date '1996-03-01' + INTERVAL '3' MONTH and exists ( select * from lineitem where l_orderkey = o_orderkey and l_commitdate < l_receiptdate ) group by o_orderpriority order by o_orderpriority limit 1;"
+# q5 = "select l_returnflag, l_linestatus,sum(l_quantity) as sum_qty,sum(l_extendedprice) as sum_base_price,sum(l_extendedprice * (1 - l_discount)) as sum_disc_price,sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,avg(l_quantity) as avg_qty,avg(l_extendedprice) as avg_price,avg(l_discount) as avg_disc,count(*) as count_order from lineitem where l_extendedprice > 100 group by l_returnflag,l_linestatus order by l_returnflag,l_linestatus;"
+# q6 = "select l_orderkey,sum(l_extendedprice * (1 - l_discount)) as revenue,o_orderdate,o_shippriority from customer,orders,lineitem where c_mktsegment = 'BUILDING' and c_custkey = o_custkey and l_orderkey = o_orderkey and o_totalprice > 10 and l_extendedprice > 10 group by l_orderkey, o_orderdate, o_shippriority order by revenue desc,o_orderdate;"
+# q7 = "select o_orderpriority,count(*) as order_count from orders where o_totalprice > 100 and exists (select * from lineitem where l_orderkey = o_orderkey and l_extendedprice > 100) group by o_orderpriority order by o_orderpriority;"
+# q8 = "select sum(l_extendedprice * l_discount) as revenue from lineitem where l_extendedprice > 100;"
+# q9 = "select n_name,sum(l_extendedprice * (1 - l_discount)) as revenue from customer,orders,lineitem,supplier,nation,region where c_custkey = o_custkey and l_orderkey = o_orderkey and l_suppkey = s_suppkey and c_nationkey = s_nationkey and s_nationkey = n_nationkey and n_regionkey = r_regionkey  and r_name = 'ASIA' and o_orderdate >= '1994-01-01' and o_orderdate < '1995-01-01'and c_acctball > 10 and s_acctbal > 20 group by n_name order by revenue desc;"
+# optimal_qep_tree = qm.get_query_tree(qm.get_query_plan(q8))
+# data = preprocessing.post_order_wrap(optimal_qep_tree.head, config, q8)
 # print(get_annotations(data))
 

@@ -107,7 +107,7 @@ class Query_Manager:
             if("Scan" in node_type and node_type not in scan_methods):
                 scan_methods.append(node_type)
             
-            elif("Join" in node_type and node_type not in join_methods):
+            elif("Join" in node_type or "Nested Loop" in node_type and node_type not in join_methods):
                 join_methods.append(node_type)
             
             if(current_node.left is not None):
@@ -229,7 +229,7 @@ class QEP_Node():
         
         qep_data["Optimal"] = self.query_result
 
-        if("Join" in node_type):
+        if("Join" in node_type or "Nested Loop" in node_type):
             qep_data["left_num_rows"] = self.left.query_result["Plan Rows"]
             qep_data['right_num_rows'] = self.right.query_result["Plan Rows"]
 
@@ -262,7 +262,7 @@ class QEP_Node():
             indexes = qm.get_index(self.query_result["Relation Name"])
             for i in range(0, len(self.query_clause)):
                 s = re.split("\s+", self.query_clause[i])
-                if(s[0] != "Scan"):
+                if(s[0] != "Scan" and s[0] not in columns_used):
                     columns_used.append(s[0])
             
             for i in range(0,len(indexes)):
