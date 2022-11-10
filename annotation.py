@@ -10,10 +10,12 @@ def state_qp_step(count,optimal_data):
     for key in optimal_data.keys():
         if(key.endswith("Cond")):
             clauses = re.findall('\({1,}(.*?)\)', optimal_data[key])
-            filter_conditions.append(*clauses)
+            if clauses:
+                filter_conditions += clauses
         elif(key == "Filter"):
             clauses = re.findall('\({1,}(.*?)\)', optimal_data[key])
-            filter_conditions.append(*clauses)
+            if clauses:
+                filter_conditions += clauses
 
     if("Scan" in optimal_data["Node Type"]):
         if(len(filter_conditions) > 0):
@@ -115,19 +117,19 @@ def explain_join(count, join_dict):
     
     return output_txt
 
-def get_annotations(data):
-    count = 1
-    output_txt = ""
+def get_annotations(n, data):
+    count = n
+    output_txt = []
     for key in data.keys():
         if("Scan" in data[key]["Optimal"]["Node Type"]):
-            output_txt += explain_scan(count, data[key])
+            output_txt.insert(0,explain_scan(count, data[key]))
         elif("Join" in data[key]["Optimal"]["Node Type"]):
-            output_txt += explain_join(count, data[key])
+            output_txt.insert(0,explain_join(count, data[key]))
         else:
-            output_txt += state_qp_step(count, data[key]["Optimal"])
-        count += 1
-        output_txt += "\n"
-    return output_txt
+            output_txt.insert(0,state_qp_step(count, data[key]["Optimal"]))
+        count -= 1
+        output_txt.insert(0,"\n")
+    return "".join(output_txt)
 
 # with open('config.yaml') as f:
 #     config = yaml.load(f,Loader = SafeLoader)

@@ -180,6 +180,7 @@ class QEP_Node():
     """
     def __init__(self,query_result):
         self.query_clause = []
+        self.id = -1
         if("Plans" in query_result.keys()):
             if(len(query_result["Plans"]) == 2):
                 self.left = QEP_Node(query_result["Plans"][0])
@@ -244,7 +245,7 @@ class QEP_Node():
                     alternate_query = qm.get_query_plan(query)
                     alternate_query_tree = qm.get_query_tree(alternate_query)
                     aqp_txt = alternate_query_tree.get_node_with_clause(self.query_clause, self.query_result)
-                    if(aqp_txt["Node Type"] == param):
+                    if(aqp_txt and aqp_txt["Node Type"] == param):
                         aqp_data[param] = aqp_txt
         
         elif("Scan" in node_type):
@@ -307,6 +308,7 @@ class QEP_Tree():
     """
     def __init__(self, query_result):
         self.head = QEP_Node(query_result)
+        self.node_count = 1
     
     def get_node_with_clause(self,clause,query_result):
         """
