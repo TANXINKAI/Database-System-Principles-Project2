@@ -16,7 +16,7 @@ with open('config.yaml') as f:
 
 if platform == "linux" or platform == "linux2" or platform == "darwin":
     print("I haven't programmed for these platforms. Graphviz binaries that i've included are compiled for WINDOWs (.exe) only - Austin")
-    sys.exit(0)
+    sys.exit(0) #Comment this line to stop the program from exiting on linux and osx platforms
 elif platform == "win32":
     graphviz_path = os.path.join(os.getcwd(),"graphviz_bin") + ";"
     os.environ["PATH"] = os.environ["PATH"] + graphviz_path
@@ -24,8 +24,6 @@ elif platform == "win32":
 '''
 Execution code from interface
 '''
-
-
 master = Tk()
 width= 300
 height= 135
