@@ -15,11 +15,12 @@ class DB_Connection:
     """
     def connect_to_DB(self,DB_credentials):
         try:
+            option = f"-c search_path={DB_credentials['DB_SCHEMA']}"
             connection = psycopg2.connect(database=DB_credentials["DB_NAME"],
                                 user=DB_credentials["DB_USER"],
                                 password=DB_credentials["DB_PASS"],
                                 host=DB_credentials["DB_HOST"],
-                                port=DB_credentials["DB_PORT"])
+                                port=DB_credentials["DB_PORT"], options=option)
             return connection
         except AttributeError:
             print("Could not connect to Database, check credentials specified in credentials.yaml")

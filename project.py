@@ -1,4 +1,4 @@
-from interface import MyWindow
+from interface import MainWindow, ConnectionWindow
 from tkinter import  Tk
 import yaml
 from yaml.loader import SafeLoader
@@ -24,14 +24,26 @@ elif platform == "win32":
 '''
 Execution code from interface
 '''
-window = Tk()
-width= window.winfo_screenwidth() * 0.75
-height= window.winfo_screenheight() * 0.75
-window.geometry("%dx%d" % (width, height))
-mywin=MyWindow(window, config)
-window.title('Query Plan Processing')
 
-window.mainloop()
+
+master = Tk()
+width= 300
+height= 135
+master.geometry("%dx%d" % (width, height))
+con_window=ConnectionWindow(master)
+master.title('Connect To Server')
+
+master.mainloop()
+if con_window.selected_schema:
+    config['Database_Credentials']['DB_SCHEMA'] = con_window.selected_schema
+    window = Tk()
+    width= window.winfo_screenwidth() * 0.75
+    height= window.winfo_screenheight() * 0.75
+    window.geometry("%dx%d" % (width, height))
+    mywin=MainWindow(window, config)
+    window.title('Query Plan Processing')
+
+    window.mainloop()
 
 ## Cleanup, removes any temporary image file that was generated to keep the folders clean
 if os.path.exists('./tmp'):

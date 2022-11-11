@@ -1,54 +1,43 @@
 import tkinter as tk
-from tkinter import ttk, Frame, SUNKEN, Label, Text, Button
-from interface_lv import Interface_ListView
+from tkinter import ttk, Frame, SUNKEN, Label, Text, Button, Entry
+from interface_lv import Interface_ListView, Interface_ListView_Schema
 import preprocessing, annotation
 import graphviz
 from PIL import ImageTk, Image
-import re
+import psycopg2
 
-class MyWindow:
+class MainWindow:
     def __init__(self, win, config):
         self.config = config
-        self.preloaded_query_frame = Frame(master = win)
         self.query_frame = Frame(master = win)
         self.tree_frame = Frame(master = win, relief = SUNKEN, borderwidth = 5)
         
-        win.rowconfigure(1, weight=2)
         win.columnconfigure(2, weight=1)
-        win.rowconfigure(2, weight=0,uniform=1)
-        self.preloaded_query_frame.grid(column=1, row=1, sticky=tk.NSEW)
-        self.query_frame.grid(column=1,row=2,sticky=tk.NSEW)
+        win.rowconfigure(1, weight=1)
+        self.query_frame.grid(column=1,row=1,sticky=tk.NSEW)
         self.tree_frame.grid(column=2, row=1, rowspan=2, sticky=tk.NSEW)
 
-        self.query_frame.columnconfigure(0, weight=1)
-        self.query_frame.rowconfigure(0, weight=1)
+        self.query_frame.columnconfigure(2, weight=1)
+        self.query_frame.rowconfigure(3, weight=1)
         self.lblQuery = Label(self.query_frame, text="Query")
         self.tbQuery = Text(self.query_frame,height=10)
         self.lblQuery.grid(column=1,row=1,sticky=tk.E)
         self.tbQuery.grid(column=2,row=1,sticky=tk.W)
+        
+        btnSubmitQuery = Button(master=self.query_frame, text="Submit Query", command=self.command_submit_query)
+        btnSubmitQuery.grid(column=2,row=2, sticky=tk.E, padx=5, pady=2)
 
-        btnOffsetFrame = Frame(master=self.query_frame)
-        btnOffsetFrame.columnconfigure(0,weight=1)
-        btnOffsetFrame.rowconfigure(0,weight=1)
-        btnSubmitQuery = Button(master=btnOffsetFrame, text="Submit Query", command=self.command_submit_query)
-        btnSubmitQuery.grid(column=2,row=1)
-        btnOffsetFrame.grid(column=2,row=2,sticky=tk.NSEW, padx=5, pady=5)
-        self.listview = Interface_ListView(self.preloaded_query_frame, self.preload_query)
-        self.listview.seed_default()
-
-        self.listview_scrollbar = ttk.Scrollbar(self.preloaded_query_frame, orient=tk.VERTICAL, command=self.listview.lv.yview)
-        self.listview.lv.configure(yscroll=self.listview_scrollbar.set)
-        self.listview_scrollbar.grid(row=1, column=2, sticky='ns')
-
-        self.tree_frame.columnconfigure(0, weight=1)
-        self.tree_frame.rowconfigure(2, weight=1)
-        self.img_handle = None
-        self.imgGraph = None
-        self.tbAnnotation = Text(self.tree_frame,height=20, bg="lightgrey")
+        self.tbAnnotation = Text(self.query_frame,height=30, bg="lightgrey")
         self.tbAnnotation.insert(tk.END,"Annotations will be loaded here after query is submitted")
         self.tbAnnotation.tag_add("instructions", "1.0", "2.0")
         self.tbAnnotation.tag_config("instructions", foreground='red')
-        self.tbAnnotation.grid(column=0,row=3,sticky=tk.EW)
+        self.tbAnnotation.grid(column=1,row=4,sticky=tk.NSEW, columnspan=3)
+
+
+        self.tree_frame.columnconfigure(1, weight=1)
+        self.tree_frame.rowconfigure(1, weight=1)
+        self.img_handle = None
+        self.imgGraph = None
         
     def preload_query(self, event):
         """
@@ -134,7 +123,7 @@ class MyWindow:
             self.imgGraph.destroy()
         self.imgGraph = Label(self.tree_frame, image=img)
         self.imgGraph.photo = img
-        self.imgGraph.grid(column=0,row=1)
+        self.imgGraph.grid(column=1,row=1)
         self.imgGraph.bind("<Button-1>", lambda e:self.img_handle.show())
         self.tree_frame.update()
 
@@ -216,3 +205,111 @@ class MyWindow:
             annotate_dict = None
             tk.messagebox.showerror(title="Error when generating graph", message=str(e))
         return annotate_dict
+
+
+
+class ConnectionWindow:
+    def __init__(self, win):
+        self.master = win
+        self.master.columnconfigure(2, weight=1)
+        self.master.rowconfigure(8, weight=0,uniform=1)
+        self.schema_frame = None
+        self.selected_schema = None
+
+        padding_vertical = 0.2
+        padding_horizontal = 5
+        self.lblAddress = Label(self.master, text="Server Address: ")
+        self.lblAddress.grid(column=1,row=1,sticky=tk.E, pady=padding_vertical)
+        self.lblPort = Label(self.master, text="Port: ")
+        self.lblPort.grid(column=1,row=2,sticky=tk.E, pady=padding_vertical)
+        self.lblDatabase = Label(self.master, text="Database: ")
+        self.lblDatabase.grid(column=1,row=3,sticky=tk.E, pady=padding_vertical)
+        self.lblUsername = Label(self.master, text="Username: ")
+        self.lblUsername.grid(column=1,row=4,sticky=tk.E, pady=padding_vertical)
+        self.lblPassword = Label(self.master, text="Password: ")
+        self.lblPassword.grid(column=1,row=5,sticky=tk.E, pady=padding_vertical)
+
+        self.tbAddress = Entry(self.master, width=100)
+        self.tbAddress.grid(column=2,row=1,sticky=tk.W, padx=padding_horizontal)
+        self.tbPort = Entry(self.master, width=60)
+        self.tbPort.grid(column=2,row=2,sticky=tk.W, padx=padding_horizontal)
+        self.tbDatabase = Entry(self.master, width=100)
+        self.tbDatabase.grid(column=2,row=3,sticky=tk.W, padx=padding_horizontal)
+        self.tbUsername = Entry(self.master, width=100)
+        self.tbUsername.grid(column=2,row=4,sticky=tk.W, padx=padding_horizontal)
+        self.tbPassword = Entry(self.master, width=100)
+        self.tbPassword.grid(column=2,row=5,sticky=tk.W, padx=padding_horizontal)
+        self.btnConnect = Button(self.master, text="Load Schemas", command=self.command_submit_connect)
+        self.btnConnect.grid(column=2,row=6,sticky=tk.E, pady=padding_vertical, padx=padding_horizontal)
+    
+        self.tbAddress.insert(0, "localhost")
+        self.tbPort.insert(0, "5432")
+        self.tbDatabase.insert(0, "postgres")
+        self.tbUsername.insert(0, "postgres")
+        self.tbPassword.insert(0, "dbms")
+
+    def command_submit_connect(self):
+        """
+        Event handler for "Connect" button click
+        """
+        DB_credentials = {}
+        DB_credentials["DB_HOST"] = self.tbAddress.get()
+        DB_credentials["DB_PORT"] = self.tbPort.get()
+        DB_credentials["DB_NAME"] = self.tbDatabase.get()
+        DB_credentials["DB_USER"] = self.tbUsername.get()
+        DB_credentials["DB_PASS"] = self.tbPassword.get()
+
+        def test_connect(DB_credentials):
+            connection = psycopg2.connect(database=DB_credentials["DB_NAME"],
+                                user=DB_credentials["DB_USER"],
+                                password=DB_credentials["DB_PASS"],
+                                host=DB_credentials["DB_HOST"],
+                                port=DB_credentials["DB_PORT"],connect_timeout=3)
+            return connection
+
+        self.collapse()
+
+        try:
+            con = test_connect(DB_credentials)
+            if(con is not None):
+                self.cursor = con.cursor()
+            self.cursor.execute("select nspname from pg_namespace;")
+            query_results = self.cursor.fetchall()
+            schemas = [schema[0] for schema in query_results]
+            self.configure_schema_list()
+            self.listview.seed(schemas)
+        except Exception as e:
+            tk.messagebox.showerror(title="Error", message=str(e))
+        pass
+
+    def collapse(self):
+        if self.schema_frame:
+            self.schema_frame = None
+
+        self.master.geometry('300x135')
+
+    def expand(self):
+        self.master.geometry('300x285')
+
+    def schema_selected(self, event):
+        for selected_item in self.listview.lv.selection():
+            item = self.listview.lv.item(selected_item)
+            choice = tk.messagebox.askquestion("Use this schema", f"Use schema '{item['text']}'?\n\nYou will have to restart the program to change your selection afterwards.", icon='question')
+            if choice == 'yes':
+                self.selected_schema = item['text']
+                self.master.destroy()
+            else:
+                self.selected_schema = None
+            return
+
+    def configure_schema_list(self):
+        if self.schema_frame:
+            self.schema_frame = None
+
+        self.schema_frame = Frame(self.master, height=50, background='orange')
+        self.schema_frame.grid(column=1, row=7, sticky=tk.NSEW, columnspan=2, pady=10)
+        self.listview = Interface_ListView_Schema(self.schema_frame,self.schema_selected)
+        self.listview_scrollbar = ttk.Scrollbar(self.schema_frame, orient=tk.VERTICAL, command=self.listview.lv.yview)
+        self.listview.lv.configure(yscroll=self.listview_scrollbar.set)
+        self.listview_scrollbar.grid(row=1, column=2, sticky='ns')
+        self.expand()
