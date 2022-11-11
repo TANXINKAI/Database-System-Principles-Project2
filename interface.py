@@ -84,6 +84,7 @@ class MyWindow:
 
         if "create view" in query:
             tk.messagebox.showerror(title="Not Supported", message="Queries with views are not supported")
+            return
 
         self.visualiseTree(query)
         #pass query to preprocessing
