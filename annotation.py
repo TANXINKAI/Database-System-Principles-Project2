@@ -4,6 +4,9 @@ import re
 # import preprocessing, interface
 
 def state_qp_step(count,optimal_data):
+    """
+    state_qp_step: Takes in a node from the optimal QEP and outputs text that describes the actions of the node.
+    """
     output_txt = ""
     filter_conditions = []
     for key in optimal_data.keys():
@@ -42,6 +45,10 @@ def state_qp_step(count,optimal_data):
     return output_txt
 
 def explain_scan(count, scan_dict):
+    """
+    explain_scan: Explains why a certain scan was selected.
+    Uses selectivity of rows, and check if columns used to scan are indexes of the relation
+    """
     output_txt = ""
     output_txt = output_txt + state_qp_step(count, scan_dict["Optimal"])
     col_not_index = []
@@ -78,6 +85,11 @@ def explain_scan(count, scan_dict):
     return output_txt
 
 def explain_join(count, join_dict):
+    """
+    explain_join: Explains why a certain join was selected.
+    Uses number of rows each input table has, and checks whether any if the input tables are sorted on the join condition.
+
+    """
     output_txt = ""
     output_txt = output_txt + state_qp_step(count, join_dict["Optimal"])
     output_txt += "The left table is estimated to have {} rows".format(join_dict["left_num_rows"])
@@ -128,6 +140,11 @@ def explain_join(count, join_dict):
     return output_txt
 
 def get_annotations(n, data):
+    """
+    get_annotations: Function to get annotations, called by interface.
+    Uses bfs to scan through nodes and get their annotations.
+    Each node that is enccountered in the bfs has it's annotations inserted at the beginning, to get procedural annotations. 
+    """
     count = n
     output_txt = []
     for key in data.keys():

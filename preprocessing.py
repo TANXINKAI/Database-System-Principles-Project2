@@ -50,21 +50,6 @@ class Query_Manager:
     def __init__(self, DB_Credentials):
         self.DB_conn = DB_Connection(DB_Credentials)
     
-    # TODO Check Query to see if it valid: check format, check if where, groupby and order by clauses have valid relations 
-
-    # def check_query(self, query:str):
-    #     try:
-    #         formatted_query = sqlvalidator.format_sql(query)
-    #         print(formatted_query)
-    #         parsed_query = sqlvalidator.parse(formatted_query)
-    #         if not parsed_query.is_valid():
-    #             print(parsed_query.errors)
-    #         else:
-    #             return formatted_query
-    #     except ParsingError:
-    #         print("Invalid Query.")
-
-
     def get_query_plan(self,query:str):
         """
         get_query_plan: pass in a query to execute query with EXPLAIN to output a query_plan
@@ -81,6 +66,13 @@ class Query_Manager:
         return tree
 
     def get_qep_information(self, query:str):
+        """
+        get_qep_information: analyses a qep to output query data that is useful for aqp generation.
+        Output: A dictionary containing
+         - all the scan methods used in the query 
+         - all the join methods used in the query
+         - whether the qep uses parallel queries 
+        """
         plan = self.get_query_plan(query)
         query_tree = self.get_query_tree(plan)
         queue = []
@@ -110,6 +102,11 @@ class Query_Manager:
         return qep_information
     
     def set_parallelize(self, qep_information, parallelize_config):
+        """
+        set_parallelize: takes in qep information to set the max number of workers
+        For postgres, the default value is 2. 
+
+        """
         parallel_query = qep_information["parallel_query"]
         if(parallel_query):
             self.DB_conn.execute("SET "+parallelize_config+" = 2")
@@ -129,6 +126,9 @@ class Query_Manager:
         self.DB_conn.execute("SET "+method_config+" = ON;")
 
     def set_aqp_parameters(self, qp_scan_params, qp_join_params, scan_params, join_params):
+        """
+        set_aqp_parameters: enables or disables scan or join methods based on aqp requirements 
+        """
         for param in scan_params.keys():
             if(param not in qp_scan_params):
                 self.disable_method(scan_params[param])
@@ -142,10 +142,18 @@ class Query_Manager:
                 self.enable_method(join_params[param])
     
     def get_num_rows(self, relation):
+        """
+        get_num_rows: Gets the number of rows a relational table has. 
+        Used to calculate selectivity for the leaf nodes of the QEP
+        """
         row_num = self.DB_conn.execute("SELECT COUNT(*) FROM "+ relation)
         return row_num[0][0]
     
     def get_index(self, relation):
+        """
+        get_index: Gets the indexes of a relation. 
+        Used to see if the relational table is indexed over the columns used in the QEP  
+        """
         indexes = []
         indexes_tuple = self.DB_conn.execute("select C.COLUMN_NAME "\
             "FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS T "\
@@ -162,12 +170,14 @@ class QEP_Node():
     """
     init: Builds a QEP Node based on query input, recursively builds children QEP Nodes based on the "Plans" field in the QEP.
     Each QEP_Node has the attributes:
+
     self.left: left child in binary query execution tree
     self.right: right child in binary query execution tree
+    Note: Subplans are ignored. 
     self.parallel_execution: check if node is performed with parallelism 
-    self.query_clause: Sorted array of conditions(fiter, join condition, relations for scan nodes)for each node. 
+    self.query_clause: Sorted array of conditions(filters, join conditions, relations for scan nodes) for each node. 
     query_clause is used for comparison to check which nodes work on the same part of the query to compare AQPs.
-    self.query_result: Contains all meta data about the query_result, without "Plans" 
+    self.query_result: Contains all meta data about the query_result, excluding "Plans"
     """
     def __init__(self,query_result):
         self.query_clause = []
@@ -211,10 +221,11 @@ class QEP_Node():
         """
         get_aqp_cost: For each node:
         1) Find Node Type (Scan/Join)
-        2) Based on Node Type, get AQP Trees for different methods 
-        3) For each AQP Tree, find the Node that should be considered by comparing the query clauses
-        4) Get meta data for Node. 
-        5) Return dictionary that contains the meta data of AQPs. 
+        2) Get Node Specifics (selectivity, columns used, sort keys, extimated number of rows)
+        3) Based on Node Type, get AQP Trees for different scan/join methods 
+        4) For each AQP Tree, find the Node that should be considered by comparing the query clauses
+        5) Get meta data for Node. 
+        6) Return dictionary that contains the meta data of AQPs and Node Specifics. 
         """
         qm = Query_Manager(config["Database_Credentials"])         
         qep_data = {}
@@ -281,18 +292,22 @@ class QEP_Node():
         return qep_data
 
     def is_sorted_on(self,head):
-            queue = []
-            sorted_on = []
-            queue.append(head)
-            while(len(queue) > 0):
-                node = queue.pop(0)
-                if(node.query_result["Node Type"] == "Sort"):
-                    sorted_on.append(*node.query_result["Sort Key"])
-                if(node.left is not None):
-                    queue.append(node.left)
-                if(node.right is not None):
-                    queue.append(node.right)
-            return sorted_on
+        """
+        is_sorted_on: returns an array fo columns that a certain node's output table is sorted on 
+        Based on Sort Nodes below current node.     
+        """
+        queue = []
+        sorted_on = []
+        queue.append(head)
+        while(len(queue) > 0):
+            node = queue.pop(0)
+            if(node.query_result["Node Type"] == "Sort"):
+                sorted_on.append(*node.query_result["Sort Key"])
+            if(node.left is not None):
+                queue.append(node.left)
+            if(node.right is not None):
+                queue.append(node.right)
+        return sorted_on
 
             
         
