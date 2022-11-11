@@ -1,7 +1,7 @@
 import re
-# import yaml
-# from yaml.loader import SafeLoader
-# import preprocessing, interface
+import yaml
+from yaml.loader import SafeLoader
+import preprocessing, interface
 
 def state_qp_step(count,optimal_data):
     """
@@ -53,31 +53,45 @@ def explain_scan(count, scan_dict):
     output_txt = output_txt + state_qp_step(count, scan_dict["Optimal"])
     col_not_index = []
     col_is_index = []
-    for column in scan_dict["columns_used"]:
-        if(column in scan_dict["indexes"]):
-            col_is_index.append(column)
-        else:
-            col_not_index.append(column)
 
-    if(len(col_is_index) == 0 and len(col_not_index) == 0):
-        output_txt += "There are no filters for this scan.\n"
-    elif(len(col_is_index) > 0):
-        output_txt += "The table ({}) is indexed over some/all of the columns that are used to filter the rows ({}).\n".format(scan_dict["Optimal"]["Relation Name"], col_is_index)
-    elif((len(col_is_index) == 0) and len(col_not_index) > 0):
-        output_txt += "The table ({}) is not indexed over any of the columns that are used to filter the rows ({}).\n".format(scan_dict["Optimal"]["Relation Name"], col_not_index)
-    
-    if(scan_dict["selectivity"] <= 0.25):
-        output_txt += "The estimated selectivity for this scan is {}, which means that the filters used in the scan are highly selective.\n".format(scan_dict["selectivity"])
-    elif(scan_dict["selectivity"] < 1):
-        output_txt += "The estimated selectivity for this scan is {}, which means that the filters used in the scan are not as selective.\n".format(scan_dict["selectivity"])
+    if(scan_dict["num_rows_before_predicate"] > 0):
+        selectivity = scan_dict["num_rows_after_predicate"]/scan_dict["num_rows_before_predicate"]
     else:
-        output_txt += "The estimated selectivity for this scan is {}, which means that all the rows have been selected.\n".format(scan_dict["selectivity"])
+        selectivity = None
+
+    if(len(scan_dict["indexes"]) == 0):
+        output_txt += "The table ({}) is not indexed over any columns.\n".format(scan_dict["Optimal"]["Relation Name"])
+    else:
+        output_txt += "The table ({}) is indexed over the columns: {}.\n".format(scan_dict["Optimal"]["Relation Name"], scan_dict["indexes"])
+        for column in scan_dict["columns_used"]:
+            if(column in scan_dict["indexes"]):
+                col_is_index.append(column)
+            else:
+                col_not_index.append(column)
+        if(len(col_is_index) == 0 and len(col_not_index) == 0):
+            output_txt += "There are no filter columns for this scan.\n"
+        elif(len(col_is_index) > 0):
+            output_txt += "The table ({}) is indexed over some/all of the columns that are used to filter the rows ({}).\n".format(scan_dict["Optimal"]["Relation Name"], col_is_index)
+        elif((len(col_is_index) == 0) and len(col_not_index) > 0):
+            output_txt += "The table ({}) is not indexed over any of the columns that are used to filter the rows ({}).\n".format(scan_dict["Optimal"]["Relation Name"], col_not_index)
+    
+    output_txt += "The table ({}) is estimated to have had {} rows before this step.\n".format(scan_dict["Optimal"]["Relation Name"], scan_dict["num_rows_before_predicate"])
+    output_txt += "The table ({}) is estimated to have {} after this step\n".format(scan_dict["Optimal"]["Relation Name"], scan_dict["num_rows_after_predicate"])
+    
+    if(selectivity is None):
+        output_txt += "There is no selectivity for this scan.\n"
+    elif(selectivity <= 0.25):
+        output_txt += "The estimated selectivity for this scan is {}, which means that the filters used in the scan are highly selective.\n".format(selectivity)
+    elif(selectivity < 1):
+        output_txt += "The estimated selectivity for this scan is {}, which means that the filters used in the scan are not as selective.\n".format(selectivity)
+    else:
+        output_txt += "The estimated selectivity for this scan is {}, which means that all the rows have been selected.\n".format(selectivity)
     
     output_txt += "Based on the selectivity and/or the filter columns, {} was used.\n".format(scan_dict["Optimal"]["Node Type"])
 
     output_txt += "The estimated cost for {} is {}.\n".format(scan_dict["Optimal"]["Node Type"], scan_dict["Optimal"]["Total Cost"])
 
-    if(len(scan_dict["aqp_data"]) != 0):
+    if(len(scan_dict["aqp_data"]) != 0 and scan_dict["Optimal"]["Total Cost"] >= 0):
         output_txt += "Alternate Plans:\n"
         for aqp in scan_dict["aqp_data"].values():
             output_txt += "{}: {} ({:.1f} times slower)\n".format(aqp["Node Type"], aqp["Total Cost"], (aqp["Total Cost"])/(scan_dict["Optimal"]["Total Cost"]))
@@ -131,8 +145,8 @@ def explain_join(count, join_dict):
         output_txt += "{} was chosen as the size of both tables is large and as both tables are unsorted.\n".format(join_dict["Optimal"]["Node Type"])
 
     output_txt += "The estimated cost for {} is {}.\n".format(join_dict["Optimal"]["Node Type"], join_dict["Optimal"]["Total Cost"])
-
-    if(len(join_dict["aqp_data"]) != 0):
+   
+    if(len(join_dict["aqp_data"]) != 0 and join_dict["Optimal"]["Total Cost"] >= 0):
         output_txt += "Alternate Plans:\n"
         for aqp in join_dict["aqp_data"].values():
             output_txt += "{}: {} ({:.1f} times slower)\n".format(aqp["Node Type"], aqp["Total Cost"], (aqp["Total Cost"])/(join_dict["Optimal"]["Total Cost"]))
@@ -162,6 +176,7 @@ def get_annotations(n, data):
 #     config = yaml.load(f,Loader = SafeLoader)
 
 # qm = preprocessing.Query_Manager(config["Database_Credentials"])
+# q_test = "select * FROM bookings where booked_for < 4;"
 # q1 = "select * FROM region WHERE r_name LIKE 'A%'"
 # q2 = "select * FROM orders O, customer C WHERE O.o_custkey = C.c_custkey"
 # q3 = "select l_orderkey, sum( l_extendedprice *( 1-l_discount )) as revenue, o_orderdate, o_shippriority from customer,orders,lineitem where c_mktsegment = 'HOUSEHOLD' and c_custkey = o_custkey  and l_orderkey = o_orderkey and o_orderdate < date '1995-03-21' and l_shipdate > date '1955-03-21' group by l_orderkey, o_orderdate, o_shippriority order by revenue DESC, o_orderdate limit 10";
@@ -172,13 +187,14 @@ def get_annotations(n, data):
 # q8 = "select sum(l_extendedprice * l_discount) as revenue from lineitem where l_extendedprice > 100;"
 # q9 = "select n_name,sum(l_extendedprice * (1 - l_discount)) as revenue from customer,orders,lineitem,supplier,nation,region where c_custkey = o_custkey and l_orderkey = o_orderkey and l_suppkey = s_suppkey and c_nationkey = s_nationkey and s_nationkey = n_nationkey and n_regionkey = r_regionkey  and r_name = 'ASIA' and o_orderdate >= '1994-01-01' and o_orderdate < '1995-01-01'and c_acctball > 10 and s_acctbal > 20 group by n_name order by revenue desc;"
 # q10 = "select sum(l_extendedprice) / 7.0 as avg_yearly from lineitem, part where p_partkey = l_partkey and p_brand = 'Brand#31' and p_container = 'WRAP BOX' and l_quantity < ( select 0.2 * avg(l_quantity) from lineitem where l_partkey = p_partkey );"
-# # optimal_qep_tree = qm.get_query_tree(qm.get_query_plan(q10))
-# print(qm.get_query_plan(q10))
+# optimal_qep_tree = qm.get_query_tree(qm.get_query_plan(q_test))
+# print(qm.get_query_plan(q_test))
+
 
 # queue = [optimal_qep_tree.head]
 # while(len(queue) >0 ):
 #     node = queue.pop(0)
-#     print(node.query_result["Node Type"])
+#     print(node.get_aqps(config, q_test))
 #     if(node.left is not None):
 #         queue.append(node.left)
 #     if(node.right is not None):
@@ -186,5 +202,5 @@ def get_annotations(n, data):
     
 
 
-#data = interface.(optimal_qep_tree.head, config, q10)
+#data = i(optimal_qep_tree.head, config, q10)
 #print(get_annotations(data))

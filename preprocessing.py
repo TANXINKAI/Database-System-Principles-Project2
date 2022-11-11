@@ -161,6 +161,8 @@ class Query_Manager:
             "ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME "\
             "WHERE C.TABLE_NAME LIKE "+ "'{}'".format(relation) + " AND T.constraint_type LIKE 'PRIMARY KEY'")
         
+        if(len(indexes_tuple) == 0):
+            return indexes
         for i in range(0, len(indexes_tuple[0])):
             indexes.append(indexes_tuple[0][i])
         return indexes
@@ -260,10 +262,9 @@ class QEP_Node():
                 num_rows_before_predicate = self.left.query_result["Plan Rows"]
             else:
                 num_rows_before_predicate = qm.get_num_rows(self.query_result["Relation Name"])
-            
-            selectivity = num_rows_after_predicate/num_rows_before_predicate
 
-            qep_data["selectivity"] = selectivity
+            qep_data["num_rows_after_predicate"] = num_rows_after_predicate
+            qep_data["num_rows_before_predicate"] = num_rows_before_predicate
 
             columns_used = []
             indexes = qm.get_index(self.query_result["Relation Name"])
