@@ -4,6 +4,7 @@ from interface_lv import Interface_ListView
 import preprocessing, annotation
 import graphviz
 from PIL import ImageTk, Image
+import re
 
 class MyWindow:
     def __init__(self, win, config):
@@ -42,7 +43,7 @@ class MyWindow:
         self.tree_frame.columnconfigure(0, weight=1)
         self.tree_frame.rowconfigure(2, weight=1)
         self.img_handle = None
-        self.james = None
+        self.imgGraph = None
         self.tbAnnotation = Text(self.tree_frame,height=20, bg="lightgrey")
         self.tbAnnotation.insert(tk.END,"Annotations will be loaded here after query is submitted")
         self.tbAnnotation.tag_add("instructions", "1.0", "2.0")
@@ -50,6 +51,10 @@ class MyWindow:
         self.tbAnnotation.grid(column=0,row=3,sticky=tk.EW)
         
     def preload_query(self, event):
+        """
+        Event handler for selecting an item in the listView
+        Loads the selected query from the listView into the query textbox
+        """
         for selected_item in self.listview.lv.selection():
             item = self.listview.lv.item(selected_item)
             if not item['text'] in self.listview.parent_map.keys():
@@ -58,6 +63,9 @@ class MyWindow:
                 self.tbQuery.insert(tk.END,text)
 
     def command_submit_query(self):
+        """
+        Event handler for "Submit Query" button click
+        """
         query=(self.tbQuery.get("0.0", tk.END)).strip()
 
         # This bunch of replace is just to 'fix' the SQL parameters for TPC-H queries.
@@ -68,57 +76,41 @@ class MyWindow:
         query = query.replace("date ':4'","date '1/1/1970'")
         query = query.replace("day (3)","")
         query = query.replace(":","")
+
+        #regex = r'(create view (.*?) as) (.*) (drop view (.*?);)'
+        #matches = re.match(regex, query)
+        #if matches and len(matches.groups())>0:
+        #    query= matches.groups()[2]
+
+        if "create view" in query:
+            tk.messagebox.showerror(title="Not Supported", message="Queries with views are not supported")
+
         self.visualiseTree(query)
         #pass query to preprocessing
     
     def visualiseTree(self,query):
-        annotate_dict = {}
-        qm = preprocessing.Query_Manager(self.config["Database_Credentials"])
-        optimal_qep_tree = qm.get_query_tree(qm.get_query_plan(query))
-        g = graphviz.Digraph('G')
-        g.edge_attr['dir'] = 'back'
-        first = True
-        queue = [optimal_qep_tree.head]
-        node_count = 0
-        t_queue = [optimal_qep_tree.head]
-        while len(t_queue) > 0:
-            curNode = t_queue.pop(0)
-            node_count += 1
-            if curNode.left:
-                t_queue.append(curNode.left)
-            if curNode.right:
-                t_queue.append(curNode.right)
-                
-        id = node_count
-        def get_node_text(node):
-            text = f"[{str(node.id)}] " + node.get_aqps(self.config,query)["Optimal"]["Node Type"] + " "
-            if len(node.query_clause) > 0:
-                text = text + f"\n{node.query_clause[0]}"
-            return text
+        try:
+            qm = preprocessing.Query_Manager(self.config["Database_Credentials"])
+            optimal_qep_tree = qm.get_query_tree(qm.get_query_plan(query))
+        except Exception as e:
+            tk.messagebox.showerror(title="Error trying to get query plan", message=str(e))
+            return
 
-        while len(queue) > 0:
-            curNode = queue.pop(0)
-            if curNode.id == -1:
-                curNode.id = id
-                id-=1
-            if first:
-                g.edge("Completed Query", get_node_text(curNode))
-                annotate_dict[get_node_text(curNode)] = curNode.get_aqps(self.config,query)
-                first = False
-            if curNode.left:
-                curNode.left.id = id
-                id-=1
-                g.edge(get_node_text(curNode), get_node_text(curNode.left))
-                annotate_dict[get_node_text(curNode.left)] = curNode.left.get_aqps(self.config,query)
-                queue.append(curNode.left)
-            if curNode.right:
-                curNode.right.id = id
-                id-=1
-                g.edge(get_node_text(curNode), get_node_text(curNode.right))
-                annotate_dict[get_node_text(curNode.right)] = curNode.right.get_aqps(self.config,query)
-                queue.append(curNode.right)
+        #BFS to get number of nodes in the tree since we don't keep track of n
+        node_count = self.bfs_get_tree_node_count(optimal_qep_tree.head)
 
-        g.render("tmp",format="jpg", view=False)
+        #Exit if node counting failed
+        if node_count == -1:
+            return
+
+        #Generate the tree image and generate dictionary used for annotation generation
+        annotate_dict = self.bfs_generate_tree_visual(optimal_qep_tree.head,query,node_count)
+        
+
+        #If annotate_dict is None, something went wrong in graph generation. Just ignore (shhhh)
+        if not annotate_dict:
+            return
+
         self.tree_frame.update()
         if self.img_handle:
             self.img_handle.close()
@@ -135,14 +127,14 @@ class MyWindow:
             img = ImageTk.PhotoImage(self.img_handle.resize((resize_width, resize_height), Image.ANTIALIAS))
         else:
             img = ImageTk.PhotoImage(self.img_handle)
-        if self.james:
-            self.james.image = ""
-            self.james.photo = ""
-            self.james.destroy()
-        self.james = Label(self.tree_frame, image=img)
-        self.james.photo = img
-        self.james.grid(column=0,row=1)
-        self.james.bind("<Button-1>", lambda e:self.img_handle.show())
+        if self.imgGraph:
+            self.imgGraph.image = ""
+            self.imgGraph.photo = ""
+            self.imgGraph.destroy()
+        self.imgGraph = Label(self.tree_frame, image=img)
+        self.imgGraph.photo = img
+        self.imgGraph.grid(column=0,row=1)
+        self.imgGraph.bind("<Button-1>", lambda e:self.img_handle.show())
         self.tree_frame.update()
 
         self.tbAnnotation.delete("0.0",tk.END)
@@ -152,6 +144,76 @@ class MyWindow:
         self.tbAnnotation.tag_config("instructions", foreground='red')
         self.tbAnnotation.update()
 
-        print("Query Completed.")
 
+    def bfs_get_tree_node_count(self, head):
+        """
+        Conducts a BFS on QEP_Tree
 
+        Returns total number of nodes
+        """
+        node_count = 0
+        try:
+            t_queue = [head]
+            while len(t_queue) > 0:
+                curNode = t_queue.pop(0)
+                node_count += 1
+                if curNode.left:
+                    t_queue.append(curNode.left)
+                if curNode.right:
+                    t_queue.append(curNode.right)
+        except Exception as e:
+            tk.messagebox.showerror(title="An error has occurred when generating graph", message=str(e))
+            node_count = -1
+        return node_count
+
+    def bfs_generate_tree_visual(self, head, query, node_count):
+        """
+        Generates the tree image and saves it to tmp.jpg
+
+        Returns dictionary for annotations generation
+        """
+        annotate_dict = {}
+
+        def get_node_text(node):
+            """
+            Retrieve the key representative of this node in the format of 
+            "[Node Id]" + " Node Type"  
+            """
+            text = f"[{str(node.id)}] " + node.get_aqps(self.config,query)["Optimal"]["Node Type"] + " "
+            if len(node.query_clause) > 0:
+                text = text + f"\n{node.query_clause[0]}"
+            return text
+
+        try:
+            g = graphviz.Digraph('G')
+            g.edge_attr['dir'] = 'back'
+            first = True
+            queue = [head]
+            id = node_count
+            while len(queue) > 0:
+                curNode = queue.pop(0)
+                if curNode.id == -1:
+                    curNode.id = id
+                    id-=1
+                if first:
+                    g.edge("Completed Query", get_node_text(curNode))
+                    annotate_dict[get_node_text(curNode)] = curNode.get_aqps(self.config,query)
+                    first = False
+                if curNode.left:
+                    curNode.left.id = id
+                    id-=1
+                    g.edge(get_node_text(curNode), get_node_text(curNode.left))
+                    annotate_dict[get_node_text(curNode.left)] = curNode.left.get_aqps(self.config,query)
+                    queue.append(curNode.left)
+                if curNode.right:
+                    curNode.right.id = id
+                    id-=1
+                    g.edge(get_node_text(curNode), get_node_text(curNode.right))
+                    annotate_dict[get_node_text(curNode.right)] = curNode.right.get_aqps(self.config,query)
+                    queue.append(curNode.right)
+
+            g.render("tmp",format="jpg", view=False)
+        except Exception as e:
+            annotate_dict = None
+            tk.messagebox.showerror(title="An error has occurred when generating graph", message=str(e))
+        return annotate_dict
