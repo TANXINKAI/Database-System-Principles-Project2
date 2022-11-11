@@ -237,7 +237,7 @@ class ConnectionWindow:
         self.tbDatabase.grid(column=2,row=3,sticky=tk.W, padx=padding_horizontal)
         self.tbUsername = Entry(self.master, width=100)
         self.tbUsername.grid(column=2,row=4,sticky=tk.W, padx=padding_horizontal)
-        self.tbPassword = Entry(self.master, width=100)
+        self.tbPassword = Entry(self.master, width=100, show = '•')
         self.tbPassword.grid(column=2,row=5,sticky=tk.W, padx=padding_horizontal)
         self.btnConnect = Button(self.master, text="Load Schemas", command=self.command_submit_connect)
         self.btnConnect.grid(column=2,row=6,sticky=tk.E, pady=padding_vertical, padx=padding_horizontal)
