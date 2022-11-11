@@ -109,8 +109,8 @@ class MainWindow:
         resize_width = self.img_handle.width
         resize_height = self.img_handle.height
         
-        if self.img_handle.height > self.tree_frame.winfo_height() - 320 and self.tree_frame.winfo_height() - 320 > 0:
-            resize_height = self.tree_frame.winfo_height() - 320
+        if self.img_handle.height > self.tree_frame.winfo_height() and self.tree_frame.winfo_height() > 0:
+            resize_height = self.tree_frame.winfo_height()
         if self.img_handle.width > self.tree_frame.winfo_width():
             resize_width = self.tree_frame.winfo_width()
         if resize_width != self.img_handle.width or resize_height != self.img_handle.height:
