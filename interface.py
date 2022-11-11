@@ -75,6 +75,10 @@ class MainWindow:
             tk.messagebox.showerror(title="Not Supported", message="Queries with views are not supported")
             return
 
+        if query.strip() == "":
+            tk.messagebox.showerror(title="Invalid Query", message="SQL Query cannot be blank")
+            return
+
         self.visualiseTree(query)
         #pass query to preprocessing
     
@@ -212,7 +216,7 @@ class ConnectionWindow:
     def __init__(self, win):
         self.master = win
         self.master.columnconfigure(2, weight=1)
-        self.master.rowconfigure(8, weight=0,uniform=1)
+        self.master.rowconfigure(7, weight=1)
         self.schema_frame = None
         self.selected_schema = None
 
@@ -306,8 +310,8 @@ class ConnectionWindow:
         if self.schema_frame:
             self.schema_frame = None
 
-        self.schema_frame = Frame(self.master, height=50, background='orange')
-        self.schema_frame.grid(column=1, row=7, sticky=tk.NSEW, columnspan=2, pady=10)
+        self.schema_frame = Frame(self.master, height=4, background='orange')
+        self.schema_frame.grid(column=1, row=7, sticky=tk.NSEW, columnspan=2, pady=1)
         self.listview = Interface_ListView_Schema(self.schema_frame,self.schema_selected)
         self.listview_scrollbar = ttk.Scrollbar(self.schema_frame, orient=tk.VERTICAL, command=self.listview.lv.yview)
         self.listview.lv.configure(yscroll=self.listview_scrollbar.set)

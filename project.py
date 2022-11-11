@@ -33,6 +33,8 @@ pos = "+%d+%d" % ((master.winfo_screenwidth() / 2) - (width/2),(master.winfo_scr
 master.geometry("%dx%d%s" % (width, height, pos))
 con_window=ConnectionWindow(master)
 master.title('Connect To Server')
+master.resizable(0,0)
+master.resizable(False,True)
 
 master.mainloop()
 if con_window.selected_schema:
