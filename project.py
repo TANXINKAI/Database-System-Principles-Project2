@@ -29,7 +29,10 @@ Execution code from interface
 master = Tk()
 width= 300
 height= 135
-master.geometry("%dx%d" % (width, height))
+
+pos = "+%d+%d" % ((master.winfo_screenwidth() / 2) - (width/2),(master.winfo_screenheight() / 2) - (height/2))
+
+master.geometry("%dx%d%s" % (width, height, pos))
 con_window=ConnectionWindow(master)
 master.title('Connect To Server')
 
@@ -39,7 +42,8 @@ if con_window.selected_schema:
     window = Tk()
     width= window.winfo_screenwidth() * 0.75
     height= window.winfo_screenheight() * 0.75
-    window.geometry("%dx%d" % (width, height))
+    pos = "+%d+%d" % ((window.winfo_screenwidth() / 2) - (width/2),(window.winfo_screenheight() / 2) - (height/2))
+    window.geometry("%dx%d%s" % (width, height,pos))
     mywin=MainWindow(window, config)
     window.title('Query Plan Processing')
 
