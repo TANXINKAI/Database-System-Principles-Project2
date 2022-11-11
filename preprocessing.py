@@ -1,14 +1,5 @@
 import re
 import psycopg2
-import yaml
-from yaml.loader import SafeLoader
-import sqlvalidator
-#import sqlparse
-from turtle import Turtle,Screen
-from math import acos
-import numpy as np
-
-
 
 class DB_Connection:
     """
@@ -180,6 +171,7 @@ class QEP_Node():
     """
     def __init__(self,query_result):
         self.query_clause = []
+        self.id = -1
         if("Plans" in query_result.keys()):
             if(len(query_result["Plans"]) == 2):
                 self.left = QEP_Node(query_result["Plans"][0])
@@ -244,7 +236,7 @@ class QEP_Node():
                     alternate_query = qm.get_query_plan(query)
                     alternate_query_tree = qm.get_query_tree(alternate_query)
                     aqp_txt = alternate_query_tree.get_node_with_clause(self.query_clause, self.query_result)
-                    if(aqp_txt["Node Type"] == param):
+                    if(aqp_txt and aqp_txt["Node Type"] == param):
                         aqp_data[param] = aqp_txt
         
         elif("Scan" in node_type):
@@ -307,6 +299,7 @@ class QEP_Tree():
     """
     def __init__(self, query_result):
         self.head = QEP_Node(query_result)
+        self.node_count = 1
     
     def get_node_with_clause(self,clause,query_result):
         """
@@ -359,41 +352,7 @@ class QEP_Tree():
                 c.sort()
                 target_clauses.append(c)
             # Reorder Match 
-            return node_clauses == target_clauses     
-          
-
-def post_order_traverse_node_tree(head,config, query):
-    '''
-    post_order_traverse_node_tree: meant for use in annotation, going in order of operator evaluation
-    '''
-    if head == None:
-        return
-    post_order_traverse_node_tree(head.left,config, query)
-    post_order_traverse_node_tree(head.right,config, query)
-
-    d = head.get_aqps(config, query)
-    if(head.query_clause != []):
-        dict_key = (str([head.query_result["Node Type"]]+head.query_clause))
-    else:
-        dict_key = str([head.query_result["Node Type"]])
-    
-    if (d is not None):
-        tree_dict[dict_key] = d
-        
-
-
-def post_order_wrap(head, config, query):
-    '''
-    wrapper function for post_order_traverse_node_tree so that the results can be stored in a dictionary through recursive calls
-    '''
-    global tree_dict
-    tree_dict = {}
-    post_order_traverse_node_tree(head,config,query)
-    return tree_dict
-
-    list_tree = [i for i in list_tree if i != None]
-    return list_tree
-
+            return node_clauses == target_clauses
 
 
 def height(root):
@@ -403,58 +362,4 @@ def height(root):
     if root == None:
         return 0 
     return max(height(root.left), height(root.right)) + 1
-
-
-
-#Preprocessing Of Diagram - should this be in interface?
-#################################################################################################
-
-DOT_DIAMETER = 30
-GENERATION_DISTANCE = 75
-def tree(turtle,d,origin,node):
-    '''
-    tree: function to draw the binary operator tree using turtle
-    TODO (Maybe):Using Dot diameter to draw a circle around the node
-    '''
-
-    turtle.penup()
-    turtle.setposition(origin)
-    if (node):
-        turtle.write(node.query_result["Node Type"], move = False, font = ("Arial",12,"normal"))
-    if d == 0:  # base case
-        return
-
-    distance = (GENERATION_DISTANCE**2 + (2**d * DOT_DIAMETER / 2)**2)**0.5
-    angle = acos(GENERATION_DISTANCE / distance)
-
-    if node.right:
-        turtle.pendown()
-    turtle.left(angle)
-    turtle.forward(distance)
-    right = turtle.position()
-    turtle.right(angle)
-
-    turtle.penup()
-    turtle.setposition(origin)
-    if node.left:
-        turtle.pendown()
-    turtle.right(angle)
-    turtle.forward(distance)
-    left = turtle.position()
-    turtle.left(angle)
-
-    tree(turtle, d - 1, right,node.right) 
-    tree(turtle, d - 1, left,node.left)  
-
-
-# with open('config.yaml') as f:
-#     config = yaml.load(f,Loader = SafeLoader)
-
-# qm = Query_Manager(config["Database_Credentials"])
-# query = "select * FROM region WHERE r_name LIKE 'A%'"
-# print(qm.get_index("orders"))
-# optimal_qep_tree = qm.get_query_tree(qm.get_query_plan(query))
-# print(post_order_wrap(optimal_qep_tree.head, config, query))
-
-
 

@@ -1,8 +1,4 @@
-import yaml
-import preprocessing
 import re
-import yaml
-from yaml.loader import SafeLoader
 
 def state_qp_step(count,optimal_data):
     output_txt = ""
@@ -128,23 +124,23 @@ def explain_join(count, join_dict):
     
     return output_txt
 
-def get_annotations(data):
-    count = 1
-    output_txt = ""
+def get_annotations(n, data):
+    count = n
+    output_txt = []
     for key in data.keys():
         # print(data[key]["Optimal"]["Node Type"])
         if("Scan" in data[key]["Optimal"]["Node Type"]):
-            output_txt += explain_scan(count, data[key])
-        elif("Join" in data[key]["Optimal"]["Node Type"] or "Nested Loop" in data[key]["Optimal"]["Node Type"]):
-            output_txt += explain_join(count, data[key])
+            output_txt.insert(0,explain_scan(count, data[key]))
+        elif("Join" in data[key]["Optimal"]["Node Type"]):
+            output_txt.insert(0,explain_join(count, data[key]))
         else:
-            output_txt += state_qp_step(count, data[key]["Optimal"])
-        count += 1
-        output_txt += "\n"
-    return output_txt
+            output_txt.insert(0,state_qp_step(count, data[key]["Optimal"]))
+        count -= 1
+        output_txt.insert(0,"\n")
+    return "".join(output_txt)
 
-with open('config.yaml') as f:
-    config = yaml.load(f,Loader = SafeLoader)
+# with open('config.yaml') as f:
+#     config = yaml.load(f,Loader = SafeLoader)
 
 # qm = preprocessing.Query_Manager(config["Database_Credentials"])
 # q1 = "select * FROM region WHERE r_name LIKE 'A%'"
