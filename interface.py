@@ -181,8 +181,6 @@ class MyWindow:
             "[Node Id]" + " Node Type"  
             """
             text = f"[{str(node.id)}] " + node.get_aqps(self.config,query)["Optimal"]["Node Type"] + " "
-            if len(node.query_clause) > 0:
-                text = text + f"\n{node.query_clause[0]}"
             return text
 
         try:
