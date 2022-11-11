@@ -163,7 +163,7 @@ class MyWindow:
                 if curNode.right:
                     t_queue.append(curNode.right)
         except Exception as e:
-            tk.messagebox.showerror(title="An error has occurred when generating graph", message=str(e))
+            tk.messagebox.showerror(title="Error when generating graph", message=str(e))
             node_count = -1
         return node_count
 
@@ -216,5 +216,5 @@ class MyWindow:
             g.render("tmp",format="jpg", view=False)
         except Exception as e:
             annotate_dict = None
-            tk.messagebox.showerror(title="An error has occurred when generating graph", message=str(e))
+            tk.messagebox.showerror(title="Error when generating graph", message=str(e))
         return annotate_dict
