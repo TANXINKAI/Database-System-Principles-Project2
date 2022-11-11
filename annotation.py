@@ -1,7 +1,7 @@
 import re
-import yaml
-from yaml.loader import SafeLoader
-import preprocessing, interface
+# import yaml
+# from yaml.loader import SafeLoader
+# import preprocessing, interface
 
 def state_qp_step(count,optimal_data):
     """
@@ -202,5 +202,4 @@ def get_annotations(n, data):
     
 
 
-#data = i(optimal_qep_tree.head, config, q10)
-#print(get_annotations(data))
+
