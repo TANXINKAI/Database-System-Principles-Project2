@@ -1,0 +1,10 @@
+digraph G {
+	edge [dir=back]
+	"Completed Query" -> "[5] Aggregate "
+	"[5] Aggregate " -> "[4] Nested Loop "
+	"[4] Nested Loop " -> "[3] Gather "
+	"[4] Nested Loop " -> "[2] Index Scan 
+Scan part"
+	"[3] Gather " -> "[1] Seq Scan 
+Scan lineitem"
+}

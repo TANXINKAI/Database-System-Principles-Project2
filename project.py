@@ -33,7 +33,6 @@ window.title('Query Plan Processing')
 
 window.mainloop()
 
-
 ## Cleanup, removes any temporary image file that was generated to keep the folders clean
 if os.path.exists('./tmp'):
     os.remove('./tmp')

@@ -1,4 +1,7 @@
 import re
+# import yaml
+# from yaml.loader import SafeLoader
+# import preprocessing, interface
 
 def state_qp_step(count,optimal_data):
     output_txt = ""
@@ -65,12 +68,12 @@ def explain_scan(count, scan_dict):
     
     output_txt += "Based on the selectivity and/or the filter columns, {} was used.\n".format(scan_dict["Optimal"]["Node Type"])
 
-    output_txt += "The estimated cost for {} is {}.\n".format(scan_dict["Optimal"]["Node Type"], scan_dict["Optimal"]["Startup Cost"]+ scan_dict["Optimal"]["Total Cost"])
+    output_txt += "The estimated cost for {} is {}.\n".format(scan_dict["Optimal"]["Node Type"], scan_dict["Optimal"]["Total Cost"])
 
     if(len(scan_dict["aqp_data"]) != 0):
         output_txt += "Alternate Plans:\n"
         for aqp in scan_dict["aqp_data"].values():
-            output_txt += "{}: {} ({:.1f} times slower)\n".format(aqp["Node Type"], aqp["Startup Cost"]+aqp["Total Cost"], (aqp["Startup Cost"]+ aqp["Total Cost"])/(scan_dict["Optimal"]["Startup Cost"]+ scan_dict["Optimal"]["Total Cost"]))
+            output_txt += "{}: {} ({:.1f} times slower)\n".format(aqp["Node Type"], aqp["Total Cost"], (aqp["Total Cost"])/(scan_dict["Optimal"]["Total Cost"]))
 
     return output_txt
 
@@ -115,12 +118,12 @@ def explain_join(count, join_dict):
     elif("Hash Join" in join_dict["Optimal"]["Node Type"]):
         output_txt += "{} was chosen as the size of both tables is large and as both tables are unsorted.\n".format(join_dict["Optimal"]["Node Type"])
 
-    output_txt += "The estimated cost for {} is {}.\n".format(join_dict["Optimal"]["Node Type"], join_dict["Optimal"]["Startup Cost"]+ join_dict["Optimal"]["Total Cost"])
+    output_txt += "The estimated cost for {} is {}.\n".format(join_dict["Optimal"]["Node Type"], join_dict["Optimal"]["Total Cost"])
 
     if(len(join_dict["aqp_data"]) != 0):
         output_txt += "Alternate Plans:\n"
         for aqp in join_dict["aqp_data"].values():
-            output_txt += "{}: {} ({:.1f} times slower)\n".format(aqp["Node Type"], aqp["Startup Cost"]+aqp["Total Cost"], (aqp["Startup Cost"]+ aqp["Total Cost"])/(join_dict["Optimal"]["Startup Cost"]+ join_dict["Optimal"]["Total Cost"]))
+            output_txt += "{}: {} ({:.1f} times slower)\n".format(aqp["Node Type"], aqp["Total Cost"], (aqp["Total Cost"])/(join_dict["Optimal"]["Total Cost"]))
     
     return output_txt
 
@@ -128,10 +131,9 @@ def get_annotations(n, data):
     count = n
     output_txt = []
     for key in data.keys():
-        # print(data[key]["Optimal"]["Node Type"])
         if("Scan" in data[key]["Optimal"]["Node Type"]):
             output_txt.insert(0,explain_scan(count, data[key]))
-        elif("Join" in data[key]["Optimal"]["Node Type"]):
+        elif("Join" in data[key]["Optimal"]["Node Type"] or "Nested Loop" in data[key]["Optimal"]["Node Type"]):
             output_txt.insert(0,explain_join(count, data[key]))
         else:
             output_txt.insert(0,state_qp_step(count, data[key]["Optimal"]))
@@ -152,7 +154,20 @@ def get_annotations(n, data):
 # q7 = "select o_orderpriority,count(*) as order_count from orders where o_totalprice > 100 and exists (select * from lineitem where l_orderkey = o_orderkey and l_extendedprice > 100) group by o_orderpriority order by o_orderpriority;"
 # q8 = "select sum(l_extendedprice * l_discount) as revenue from lineitem where l_extendedprice > 100;"
 # q9 = "select n_name,sum(l_extendedprice * (1 - l_discount)) as revenue from customer,orders,lineitem,supplier,nation,region where c_custkey = o_custkey and l_orderkey = o_orderkey and l_suppkey = s_suppkey and c_nationkey = s_nationkey and s_nationkey = n_nationkey and n_regionkey = r_regionkey  and r_name = 'ASIA' and o_orderdate >= '1994-01-01' and o_orderdate < '1995-01-01'and c_acctball > 10 and s_acctbal > 20 group by n_name order by revenue desc;"
-# optimal_qep_tree = qm.get_query_tree(qm.get_query_plan(q8))
-# data = preprocessing.post_order_wrap(optimal_qep_tree.head, config, q8)
-# print(get_annotations(data))
+# q10 = "select sum(l_extendedprice) / 7.0 as avg_yearly from lineitem, part where p_partkey = l_partkey and p_brand = 'Brand#31' and p_container = 'WRAP BOX' and l_quantity < ( select 0.2 * avg(l_quantity) from lineitem where l_partkey = p_partkey );"
+# # optimal_qep_tree = qm.get_query_tree(qm.get_query_plan(q10))
+# print(qm.get_query_plan(q10))
 
+# queue = [optimal_qep_tree.head]
+# while(len(queue) >0 ):
+#     node = queue.pop(0)
+#     print(node.query_result["Node Type"])
+#     if(node.left is not None):
+#         queue.append(node.left)
+#     if(node.right is not None):
+#         queue.append(node.right)
+    
+
+
+#data = interface.(optimal_qep_tree.head, config, q10)
+#print(get_annotations(data))

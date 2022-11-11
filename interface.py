@@ -152,4 +152,6 @@ class MyWindow:
         self.tbAnnotation.tag_config("instructions", foreground='red')
         self.tbAnnotation.update()
 
+        print("Query Completed.")
+
 

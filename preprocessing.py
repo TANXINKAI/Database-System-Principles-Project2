@@ -173,11 +173,15 @@ class QEP_Node():
         self.query_clause = []
         self.id = -1
         if("Plans" in query_result.keys()):
-            if(len(query_result["Plans"]) == 2):
-                self.left = QEP_Node(query_result["Plans"][0])
-                self.right = QEP_Node(query_result["Plans"][1])
-            elif(len(query_result["Plans"]) == 1):
-                self.left = QEP_Node(query_result["Plans"][0])
+            non_subplan_nodes = []
+            for plan in query_result["Plans"]:
+                if("SubPlan" not in plan["Parent Relationship"]):
+                    non_subplan_nodes.append(plan)
+            if(len(non_subplan_nodes) == 2):
+                self.left = QEP_Node(non_subplan_nodes[0])
+                self.right = QEP_Node(non_subplan_nodes[1])
+            elif(len(non_subplan_nodes) == 1):
+                self.left = QEP_Node(non_subplan_nodes[0])
                 self.right = None
         else:
             self.left = None
@@ -283,7 +287,7 @@ class QEP_Node():
             while(len(queue) > 0):
                 node = queue.pop(0)
                 if(node.query_result["Node Type"] == "Sort"):
-                    sorted_on.append(node.query_result["Sort Key"])
+                    sorted_on.append(*node.query_result["Sort Key"])
                 if(node.left is not None):
                     queue.append(node.left)
                 if(node.right is not None):
