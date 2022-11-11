@@ -163,7 +163,7 @@ class MyWindow:
                 if curNode.right:
                     t_queue.append(curNode.right)
         except Exception as e:
-            tk.messagebox.showerror(title="Error when generating graph", message=str(e))
+            tk.messagebox.showerror(title="Error when getting node count", message=str(e))
             node_count = -1
         return node_count
 
