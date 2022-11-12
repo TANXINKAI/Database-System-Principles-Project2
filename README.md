@@ -1,1 +1,65 @@
-# Database-System-Principles-Project2
+# **Database-System-Principles-Project2**
+
+## Installation Guide
+
+### Operating Environment Requirements
+* Windows 10 32-bit/64-bit
+    * Graphviz windows portable binaries are included, unable to run .exe on Linux/OSX
+* Python >= 3.4
+    * F-strings are used in code
+Dependencies are based off Python 3 packages
+* Pip3 (Python 3 pip)
+    * For installation of python dependencies
+
+### Python Dependencies
+* Before attempting to run the python code, dependencies should be installed through the following command from the project root folder:  
+```
+pip install -r requirements.txt
+```
+
+### Note
+Running on Linux/OSX
+* Follow installation instructions of Graphviz from (https://graphviz.org/download/)
+* Ensure Graphviz is in system environment / path
+* Comment `sys.exit(0)` from line 19 of *project.py*
+* Execute from the project root folder: *python project.py*
+
+In this guide, users would be required to install pgAdmin and set up their own local database (PostgreSQL) and import the tpc-h data. Postgresql version should at least be 14.0 for the program to work(else enable_memoize error will occur). To change the default connection fields that are populated when the UI is loaded, modify the ‘config.yaml’ file before starting the program.
+The fields can also be modified during runtime (non-persistent) on the connection interface. 
+
+![image](https://user-images.githubusercontent.com/81215661/201454552-28019bb2-12ec-43c1-bc2a-5ae98a080389.png)
+
+**Fig 1.1 Postgres Database Credentials**
+
+
+### Run the application
+To **execute** the application, users would be required to run the `project.py` file. 
+
+If any errors are encountered, please refer to the next section.
+
+### Troubleshooting
+  1. If no file or directory ‘config.yaml’ is encountered, please add your config file directory in project.py
+
+
+![image](https://user-images.githubusercontent.com/81215661/201454569-18ca2c32-e335-4cf1-983b-2aea56cd0672.png)
+
+**Fig 1.2 Error unable to find config.yaml after running project.py**
+
+
+![image](https://user-images.githubusercontent.com/81215661/201454653-aca6883e-c1bd-4676-8072-96fd6d48ba76.png)
+
+**Fig 1.3 Editing Config File Path in project.py**
+
+  2. If Local host connectivity is denied, please start your postgresql server (start postgresql in services.msc).
+
+
+![image](https://user-images.githubusercontent.com/81215661/201454878-6d7db180-e682-4c9b-8561-8d05c9d790c2.png)
+
+**Fig 1.4 Postgres Local Server Connection Failure**
+
+  3. If an authentication error is encountered, please ensure your postgre credentials are accurate in the config.yaml file. In particular “DB_NAME” and “DB_PASS” refers to the database name and your pgadmin master password respectively.
+
+
+![image](https://user-images.githubusercontent.com/81215661/201454889-bbb9fcf4-5bd8-4f5f-939b-5e6c56e54af8.png)
+
+**Fig 1.5 Postgres Authentication Failure**
