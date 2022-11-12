@@ -196,6 +196,9 @@ class QEP_Node():
             elif(len(non_subplan_nodes) == 1):
                 self.left = QEP_Node(non_subplan_nodes[0])
                 self.right = None
+            else:
+                self.left = None
+                self.right = None
         else:
             self.left = None
             self.right = None

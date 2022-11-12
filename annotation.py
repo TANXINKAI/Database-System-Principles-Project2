@@ -9,6 +9,7 @@ def state_qp_step(count,optimal_data):
     """
     output_txt = ""
     filter_conditions = []
+
     for key in optimal_data.keys():
         if(key.endswith("Cond")):
             clauses = re.findall('\({1,}(.*?)\)', optimal_data[key])
@@ -40,8 +41,6 @@ def state_qp_step(count,optimal_data):
                 output_txt += "{}) A {} is performed with key {}.\n".format(count, optimal_data['Node Type'], sort_key)
             else:
                 output_txt += "{}) A {} is performed.\n".format(count, optimal_data['Node Type'])
-
-    
     return output_txt
 
 def explain_scan(count, scan_dict):
@@ -170,6 +169,9 @@ def get_annotations(n, data):
             output_txt.insert(0,state_qp_step(count, data[key]["Optimal"]))
         count -= 1
         output_txt.insert(0,"\n")
+    
+    first_value = list(data.values())[0]
+    output_txt.insert(0,"The selected Query Plan has an estimated total cost of {}".format(first_value["Optimal"]["Total Cost"]))
     return "".join(output_txt)
 
 # with open('config.yaml') as f:
