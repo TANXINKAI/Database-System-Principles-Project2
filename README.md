@@ -27,7 +27,7 @@ Running on Linux/OSX
 In this guide, users would be required to install pgAdmin and set up their own local database (PostgreSQL) and import the tpc-h data. Postgresql version should at least be 14.0 for the program to work(else enable_memoize error will occur). To change the default connection fields that are populated when the UI is loaded, modify the ‘config.yaml’ file before starting the program.
 The fields can also be modified during runtime (non-persistent) on the connection interface. 
 
-![image](https://user-images.githubusercontent.com/81215661/201454552-28019bb2-12ec-43c1-bc2a-5ae98a080389.png)
+![image](https://user-images.githubusercontent.com/81215661/201507744-84d4a05e-2c5a-4861-a009-869f5d8e3ca0.png)
 
 **Fig 1.1 Postgres Database Credentials**
 
@@ -46,7 +46,7 @@ If any errors are encountered, please refer to the next section.
 **Fig 1.2 Error unable to find config.yaml after running project.py**
 
 
-![image](https://user-images.githubusercontent.com/81215661/201454653-aca6883e-c1bd-4676-8072-96fd6d48ba76.png)
+![image](https://user-images.githubusercontent.com/81215661/201507734-bbc4e795-67cf-4643-8532-1d247ef0984e.png)
 
 **Fig 1.3 Editing Config File Path in project.py**
 
