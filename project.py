@@ -41,10 +41,11 @@ master.mainloop()
 if con_window.selected_schema:
     config['Database_Credentials']['DB_SCHEMA'] = con_window.selected_schema
     window = Tk()
-    width= window.winfo_screenwidth() * 0.75
-    height= window.winfo_screenheight() * 0.75
-    pos = "+%d+%d" % ((window.winfo_screenwidth() / 2) - (width/2),(window.winfo_screenheight() / 2) - (height/2))
+    width= window.winfo_screenwidth() 
+    height= window.winfo_screenheight() 
+    pos = "+%d+%d" % (0,0)
     window.geometry("%dx%d%s" % (width, height,pos))
+    window.resizable(False,False)
     mywin=MainWindow(window, config)
     window.title('Query Plan Processing')
 

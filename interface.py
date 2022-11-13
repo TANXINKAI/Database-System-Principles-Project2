@@ -31,7 +31,7 @@ class MainWindow:
         self.tbAnnotation.insert(tk.END,"Annotations will be loaded here after query is submitted")
         self.tbAnnotation.tag_add("instructions", "1.0", "2.0")
         self.tbAnnotation.tag_config("instructions", foreground='red')
-        self.tbAnnotation.grid(column=1,row=4,sticky=tk.NSEW, columnspan=3,pady=20)
+        self.tbAnnotation.grid(column=1,row=4,sticky=tk.NSEW, columnspan=3)
 
 
         self.tree_frame.columnconfigure(1, weight=1)
