@@ -64,6 +64,7 @@ If any errors are encountered, please refer to the next section.
 
 **Fig 1.5 Postgres Authentication Failure**
 
+
 Error graphviz not in PATH
 
 After Pip installing all the required dependencies and if the user still obtains an error “obtaining graph” after entering a Query in “public” database. Please copy the file path of “Your_file_directory/Database-System-Principles-Project2/graphviz_bin” into your system PATH.
