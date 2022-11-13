@@ -51,7 +51,7 @@ def explain_scan(count, scan_dict):
     col_not_index = []
     col_is_index = []
 
-    if(scan_dict["num_rows_before_predicate"] > 0):
+    if(scan_dict["num_rows_before_predicate"] > 0 and scan_dict["num_rows_before_predicate"] <= scan_dict["num_rows_after_predicate"]):
         selectivity = scan_dict["num_rows_after_predicate"]/scan_dict["num_rows_before_predicate"]
     else:
         selectivity = None
@@ -72,8 +72,9 @@ def explain_scan(count, scan_dict):
         elif((len(col_is_index) == 0) and len(col_not_index) > 0):
             output_txt += "The table ({}) is not indexed over any of the columns that are used to filter the rows ({}).\n".format(scan_dict["Optimal"]["Relation Name"], col_not_index)
     
-    output_txt += "The table ({}) is estimated to have had {} rows before this step.\n".format(scan_dict["Optimal"]["Relation Name"], scan_dict["num_rows_before_predicate"])
-    output_txt += "The table ({}) is estimated to have {} after this step\n".format(scan_dict["Optimal"]["Relation Name"], scan_dict["num_rows_after_predicate"])
+    if(scan_dict["num_rows_before_predicate"] <= scan_dict["num_rows_after_predicate"]):
+        output_txt += "The table ({}) is estimated to have had {} rows before this step.\n".format(scan_dict["Optimal"]["Relation Name"], scan_dict["num_rows_before_predicate"])
+        output_txt += "The table ({}) is estimated to have {} after this step\n".format(scan_dict["Optimal"]["Relation Name"], scan_dict["num_rows_after_predicate"])
     
     if(selectivity is None):
         output_txt += "There is no selectivity for this scan.\n"
