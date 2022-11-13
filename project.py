@@ -31,7 +31,7 @@ height= 155
 pos = "+%d+%d" % ((master.winfo_screenwidth() / 2) - (width/2),(master.winfo_screenheight() / 2) - (height/2))
 
 master.geometry("%dx%d%s" % (width, height, pos))
-con_window=ConnectionWindow(master)
+con_window=ConnectionWindow(master, config)
 master.title('Connect To Server')
 master.resizable(0,0)
 master.resizable(False,True)
@@ -40,6 +40,12 @@ master.resizable(False,True)
 master.mainloop()
 if con_window.selected_schema:
     config['Database_Credentials']['DB_SCHEMA'] = con_window.selected_schema
+    config['Database_Credentials']["DB_HOST"] = con_window.config['Database_Credentials']["DB_HOST"]
+    config['Database_Credentials']['DB_PORT'] = con_window.config['Database_Credentials']["DB_PORT"]
+    config['Database_Credentials']['DB_NAME'] = con_window.config['Database_Credentials']["DB_NAME"]
+    config['Database_Credentials']['DB_USER'] = con_window.config['Database_Credentials']["DB_USER"]
+    config['Database_Credentials']['DB_PASS'] = con_window.config['Database_Credentials']["DB_PASS"]
+   
     window = Tk()
     width= window.winfo_screenwidth() 
     height= window.winfo_screenheight() 
