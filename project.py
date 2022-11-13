@@ -12,10 +12,10 @@ with open('config.yaml') as f:
 
 if platform == "linux" or platform == "linux2" or platform == "darwin":
     graphviz_path = os.path.join(os.getcwd(),"graphviz_bin") + ";"
-    #os.environ["PATH"] = "/usr/local/Cellar/graphviz/7.0.0/bin”
+    os.environ["PATH"] = "/usr/local/Cellar/graphviz/7.0.0/bin"
     print("Implementation for these platforms is not supported. Graphviz binaries that i've included are compiled for WINDOWs (.exe) only.")
     #Comment this line to stop the program from exiting on linux and osx platforms
-    sys.exit(0)
+    #sys.exit(0)
 
 elif platform == "win32":
     graphviz_path = os.path.join(os.getcwd(),"graphviz_bin") + ";"
@@ -26,7 +26,7 @@ Execution code from interface
 '''
 master = Tk()
 width= 300
-height= 135
+height= 155
 
 pos = "+%d+%d" % ((master.winfo_screenwidth() / 2) - (width/2),(master.winfo_screenheight() / 2) - (height/2))
 
@@ -47,7 +47,6 @@ if con_window.selected_schema:
     window.geometry("%dx%d%s" % (width, height,pos))
     mywin=MainWindow(window, config)
     window.title('Query Plan Processing')
-    window.attributes('-fullscreen', True)
 
     window.mainloop()
 
