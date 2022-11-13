@@ -213,12 +213,14 @@ class MainWindow:
 
 
 class ConnectionWindow:
-    def __init__(self, win):
+    def __init__(self, win, config):
         self.master = win
         self.master.columnconfigure(2, weight=1)
         self.master.rowconfigure(7, weight=1)
         self.schema_frame = None
         self.selected_schema = None
+        self.config = config
+
 
         padding_vertical = 0.2
         padding_horizontal = 5
@@ -246,11 +248,11 @@ class ConnectionWindow:
         self.btnConnect = Button(self.master, text="Load Schemas", command=self.command_submit_connect)
         self.btnConnect.grid(column=2,row=6,sticky=tk.E, pady=padding_vertical, padx=padding_horizontal)
     
-        self.tbAddress.insert(0, "localhost")
-        self.tbPort.insert(0, "5432")
-        self.tbDatabase.insert(0, "postgres")
-        self.tbUsername.insert(0, "postgres")
-        self.tbPassword.insert(0, "dbms")
+        self.tbAddress.insert(0, self.config['Database_Credentials']["DB_HOST"])
+        self.tbPort.insert(0, self.config['Database_Credentials']["DB_PORT"])
+        self.tbDatabase.insert(0, self.config['Database_Credentials']["DB_NAME"])
+        self.tbUsername.insert(0, self.config['Database_Credentials']["DB_USER"])
+        self.tbPassword.insert(0, self.config['Database_Credentials']["DB_PASS"])
 
     def command_submit_connect(self):
         """
@@ -282,6 +284,12 @@ class ConnectionWindow:
             schemas = [schema[0] for schema in query_results]
             self.configure_schema_list()
             self.listview.seed(schemas)
+            self.config['Database_Credentials']["DB_HOST"] = DB_credentials["DB_HOST"]
+            self.config['Database_Credentials']["DB_NAME"] = DB_credentials["DB_NAME"]
+            self.config['Database_Credentials']["DB_PASS"] = DB_credentials["DB_PASS"]
+            self.config['Database_Credentials']["DB_PORT"] = DB_credentials["DB_PORT"]
+            self.config['Database_Credentials']["DB_USER"] = DB_credentials["DB_USER"]
+
         except Exception as e:
             tk.messagebox.showerror(title="Error", message=str(e))
         pass
@@ -290,7 +298,7 @@ class ConnectionWindow:
         if self.schema_frame:
             self.schema_frame = None
 
-        self.master.geometry('300x135')
+        self.master.geometry('300x155')
 
     def expand(self):
         self.master.geometry('300x285')

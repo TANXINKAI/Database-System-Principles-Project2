@@ -63,3 +63,44 @@ If any errors are encountered, please refer to the next section.
 ![image](https://user-images.githubusercontent.com/81215661/201454889-bbb9fcf4-5bd8-4f5f-939b-5e6c56e54af8.png)
 
 **Fig 1.5 Postgres Authentication Failure**
+
+
+Error graphviz not in PATH
+
+After Pip installing all the required dependencies and if the user still obtains an error “obtaining graph” after entering a Query in “public” database. Please copy the file path of “Your_file_directory/Database-System-Principles-Project2/graphviz_bin” into your system PATH.
+Restart the device and environment after adding it into system PATH.
+
+ ![image](https://user-images.githubusercontent.com/81215661/201504515-fe010456-af82-4323-b87d-39146ff96012.png)
+
+**Fig 1.6 Graphviz not in System Path**
+
+
+
+## Software UI Guide
+  1. Run the Project.py file
+
+  2. Input your Database Information and Credentials
+
+ ![image](https://user-images.githubusercontent.com/81215661/201504563-8512c850-e653-4aeb-9407-2b7ce1c74506.png)
+
+**Fig 2.1 Database connection**
+  
+  3. Load Schemas and Select the appropriate Schema Name (Usually schemas are in “public”)
+
+ ![image](https://user-images.githubusercontent.com/81215661/201504576-c8ac67f5-6855-42a4-94ca-fab307e5ad6d.png)
+
+**Fig 2.2 Select the Appropriate Schema Name**
+
+ 4. Enter your queries as shown in the next section
+
+
+### Query Plan Visualization
+
+ ![image](https://user-images.githubusercontent.com/81215661/201504544-0158a061-0feb-4daa-ab86-10941cda6ebf.png)
+
+**Fig 2.3 Query Execution Plan Visualization**
+
+In the example above, a query is entered into the text box before being submitted with the “Submit Query” button.
+The generated tree is visualized on the right half of the UI and at the same time, annotated at the bottom left of the UI.
+Each annotation is labeled with a number that corresponds to the representative step indicated by [X] (where X is an integer) in the visual representation of the generated tree.
+
