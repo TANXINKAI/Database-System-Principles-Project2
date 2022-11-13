@@ -6,16 +6,12 @@ import os
 import sys
 from sys import platform
 
-'''
-Execution code from preprocessing
-TODO: clean up the printing of the tree, (does the cost need to be shown too?), embed the tree into the tkinter window
-'''
 
 with open('config.yaml') as f:
     config = yaml.load(f,Loader = SafeLoader)
 
 if platform == "linux" or platform == "linux2" or platform == "darwin":
-    print("I haven't programmed for these platforms. Graphviz binaries that i've included are compiled for WINDOWs (.exe) only - Austin")
+    print("Implementation for these platforms is not supported. Graphviz binaries that i've included are compiled for WINDOWs (.exe) only.")
     sys.exit(0) #Comment this line to stop the program from exiting on linux and osx platforms
 elif platform == "win32":
     graphviz_path = os.path.join(os.getcwd(),"graphviz_bin") + ";"
