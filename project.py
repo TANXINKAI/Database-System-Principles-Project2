@@ -11,8 +11,12 @@ with open('config.yaml') as f:
     config = yaml.load(f,Loader = SafeLoader)
 
 if platform == "linux" or platform == "linux2" or platform == "darwin":
+    graphviz_path = os.path.join(os.getcwd(),"graphviz_bin") + ";"
+    #os.environ["PATH"] = "/usr/local/Cellar/graphviz/7.0.0/bin”
     print("Implementation for these platforms is not supported. Graphviz binaries that i've included are compiled for WINDOWs (.exe) only.")
-    sys.exit(0) #Comment this line to stop the program from exiting on linux and osx platforms
+    #Comment this line to stop the program from exiting on linux and osx platforms
+    sys.exit(0)
+
 elif platform == "win32":
     graphviz_path = os.path.join(os.getcwd(),"graphviz_bin") + ";"
     os.environ["PATH"] = os.environ["PATH"] + graphviz_path
@@ -32,6 +36,7 @@ master.title('Connect To Server')
 master.resizable(0,0)
 master.resizable(False,True)
 
+
 master.mainloop()
 if con_window.selected_schema:
     config['Database_Credentials']['DB_SCHEMA'] = con_window.selected_schema
@@ -42,6 +47,7 @@ if con_window.selected_schema:
     window.geometry("%dx%d%s" % (width, height,pos))
     mywin=MainWindow(window, config)
     window.title('Query Plan Processing')
+    window.attributes('-fullscreen', True)
 
     window.mainloop()
 
